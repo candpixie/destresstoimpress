@@ -46,10 +46,10 @@ export const GameCard: React.FC<GameCardProps> = ({ game, darkMode, onClick }) =
         </motion.div>
         
         {/* Title */}
-        <motion.h3 
+        <motion.h3
           className={`text-2xl font-bold mb-3 ${
           darkMode ? 'text-white' : 'text-gray-800'
-        } font-['Baloo_2']`}>
+        } font-['Baloo_2']`}
           initial={{ opacity: 0, x: -20 }}
           whileInView={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.2 }}
@@ -58,10 +58,10 @@ export const GameCard: React.FC<GameCardProps> = ({ game, darkMode, onClick }) =
         </motion.h3>
         
         {/* Tagline */}
-        <motion.p 
+        <motion.p
           className={`text-base mb-6 ${
           darkMode ? 'text-gray-300' : 'text-gray-600'
-        } leading-relaxed font-['Comic_Neue']`}>
+        } leading-relaxed font-['Comic_Neue']`}
           initial={{ opacity: 0, x: -20 }}
           whileInView={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.3 }}
