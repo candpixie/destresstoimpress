@@ -99,7 +99,7 @@ export const fetchTrendingMemes = async (): Promise<RedditPost[]> => {
     
     const response = await fetch(url, {
       headers: {
-        'User-Agent': 'MeMemeMer/1.0'
+        'User-Agent': 'web:destresstoimpress:v1.0 (by /u/PennAppsTeam)'
       }
     });
     
@@ -156,7 +156,7 @@ export const fetchTrendingMemes = async (): Promise<RedditPost[]> => {
         `/reddit-api/r/${fallbackSubreddit}/hot.json?limit=10`,
         {
           headers: {
-            'User-Agent': 'MeMemeMer/1.0'
+            'User-Agent': 'web:destresstoimpress:v1.0 (by /u/PennAppsTeam)'
           }
         }
       );
