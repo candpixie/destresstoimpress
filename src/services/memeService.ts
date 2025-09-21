@@ -2,8 +2,8 @@ import { RedditPost } from '../types';
 
 const MEME_SUBREDDITS = [
   'wholesomememes',
-  'educationalmemes',
-  'sciencememes', 
+  'EducationalMemes',
+  'ScienceMemes', 
   'mathmemes',
   'historymemes',
   'ProgrammerHumor',
@@ -11,8 +11,10 @@ const MEME_SUBREDDITS = [
   'physicsmemes',
   'biologymemes',
   'GetMotivated',
-  'learningmemes',
-  'booksmemes'
+  'studying',
+  'booksuggestions',
+  'coolguides',
+  'todayilearned'
 ];
 
 // Comprehensive content filtering for teen-friendly, educational content
