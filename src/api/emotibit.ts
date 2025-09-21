@@ -131,26 +131,9 @@ class EmotiBitService {
   }
 
   private async tryHttpConnection(): Promise<boolean> {
-    // Skip HTTP connection if endpoint is not configured
-    if (!this.config.httpEndpoint) {
-      return false;
-    }
-
-    try {
-      const response = await fetch(this.config.httpEndpoint!, {
-        method: 'GET',
-        timeout: 3000
-      } as any);
-
-      if (response.ok) {
-        console.log('🌐 HTTP connection established');
-        this.startHttpPolling();
-        return true;
-      }
-      return false;
-    } catch (error) {
-      return false;
-    }
+    // Skip HTTP connection - Python backend not available in WebContainer
+    console.log('⚠️ HTTP connection skipped - Python backend not available');
+    return false;
   }
 
   private async trySerialConnection(): Promise<boolean> {
