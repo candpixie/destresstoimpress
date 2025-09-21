@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Home, RotateCcw, Heart, Pause, Play, Wind } from 'lucide-react';
+import { Home, RotateCcw, Heart, Pause, Play, Wind, Mic, MicOff, Settings } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface FlappyBreathProps {
@@ -34,6 +34,15 @@ interface GameState {
   elapsedTime: number;
 }
 
+interface MicrophoneState {
+  isActive: boolean;
+  hasPermission: boolean;
+  volume: number;
+  baseline: number;
+  calibrating: boolean;
+  error: string | null;
+}
+
 export const FlappyBreath: React.FC<FlappyBreathProps> = ({ darkMode }) => {
   const navigate = useNavigate();
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -41,6 +50,15 @@ export const FlappyBreath: React.FC<FlappyBreathProps> = ({ darkMode }) => {
   const lastTimeRef = useRef<number>(0);
   const startTimeRef = useRef<number>(0);
   const breathingTimerRef = useRef<number>(0);
+
+  // Audio context and microphone refs
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const microphoneRef = useRef<MediaStreamAudioSourceNode | null>(null);
+  const audioStreamRef = useRef<MediaStream | null>(null);
+  const dataArrayRef = useRef<Uint8Array | null>(null);
+  const samplesRef = useRef<number[]>([]);
+  const monitoringRef = useRef<boolean>(false);
 
   // Game constants
   const GAME_WIDTH = 800;
@@ -66,9 +84,196 @@ export const FlappyBreath: React.FC<FlappyBreathProps> = ({ darkMode }) => {
     elapsedTime: 0
   });
 
+  // Microphone state
+  const [micState, setMicState] = useState<MicrophoneState>({
+    isActive: false,
+    hasPermission: false,
+    volume: 0,
+    baseline: 0,
+    calibrating: false,
+    error: null
+  });
+
   const [gameStarted, setGameStarted] = useState(false);
   const [breathMeter, setBreathMeter] = useState(50);
   const [difficultyLevel, setDifficultyLevel] = useState(1.0);
+  const [sensitivity, setSensitivity] = useState(1.5);
+  const [showMicTest, setShowMicTest] = useState(false);
+
+  // Request microphone permission
+  const requestMicrophonePermission = useCallback(async () => {
+    try {
+      setMicState(prev => ({ ...prev, error: null, calibrating: true }));
+      
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: false,
+          noiseSuppression: false,
+          autoGainControl: false
+        }
+      });
+
+      audioStreamRef.current = stream;
+      setMicState(prev => ({ 
+        ...prev, 
+        hasPermission: true, 
+        calibrating: false,
+        error: null 
+      }));
+
+      return true;
+    } catch (error) {
+      console.error('Microphone permission error:', error);
+      setMicState(prev => ({ 
+        ...prev, 
+        hasPermission: false, 
+        calibrating: false,
+        error: `Microphone access denied: ${(error as Error).message}` 
+      }));
+      return false;
+    }
+  }, []);
+
+  // Start microphone monitoring
+  const startMicrophoneMonitoring = useCallback(async () => {
+    if (!audioStreamRef.current) {
+      const hasPermission = await requestMicrophonePermission();
+      if (!hasPermission) return false;
+    }
+
+    try {
+      audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      microphoneRef.current = audioContextRef.current.createMediaStreamSource(audioStreamRef.current!);
+      analyserRef.current = audioContextRef.current.createAnalyser();
+
+      analyserRef.current.fftSize = 256;
+      analyserRef.current.smoothingTimeConstant = 0.8;
+
+      microphoneRef.current.connect(analyserRef.current);
+
+      const bufferLength = analyserRef.current.frequencyBinCount;
+      dataArrayRef.current = new Uint8Array(bufferLength);
+
+      monitoringRef.current = true;
+      setMicState(prev => ({ ...prev, isActive: true, calibrating: true }));
+
+      // Start calibration
+      samplesRef.current = [];
+      setTimeout(() => {
+        if (samplesRef.current.length > 0) {
+          const baseline = samplesRef.current.reduce((a, b) => a + b) / samplesRef.current.length;
+          setMicState(prev => ({ ...prev, baseline, calibrating: false }));
+        }
+      }, 3000); // 3 second calibration
+
+      startAudioMonitoring();
+      return true;
+    } catch (error) {
+      console.error('Audio monitoring error:', error);
+      setMicState(prev => ({ 
+        ...prev, 
+        error: `Audio setup failed: ${(error as Error).message}` 
+      }));
+      return false;
+    }
+  }, [requestMicrophonePermission]);
+
+  // Stop microphone monitoring
+  const stopMicrophoneMonitoring = useCallback(() => {
+    monitoringRef.current = false;
+    
+    if (audioContextRef.current) {
+      audioContextRef.current.close();
+      audioContextRef.current = null;
+    }
+
+    if (audioStreamRef.current) {
+      audioStreamRef.current.getTracks().forEach(track => track.stop());
+      audioStreamRef.current = null;
+    }
+
+    setMicState(prev => ({ 
+      ...prev, 
+      isActive: false, 
+      volume: 0,
+      calibrating: false 
+    }));
+  }, []);
+
+  // Audio monitoring loop
+  const startAudioMonitoring = useCallback(() => {
+    const monitor = () => {
+      if (!monitoringRef.current || !analyserRef.current || !dataArrayRef.current) return;
+
+      analyserRef.current.getByteFrequencyData(dataArrayRef.current);
+
+      // Calculate RMS volume
+      let sum = 0;
+      for (let i = 0; i < dataArrayRef.current.length; i++) {
+        sum += dataArrayRef.current[i] * dataArrayRef.current[i];
+      }
+      const rms = Math.sqrt(sum / dataArrayRef.current.length);
+
+      setMicState(prev => ({ ...prev, volume: rms }));
+
+      // Collect samples for baseline during calibration
+      if (micState.calibrating && samplesRef.current.length < 150) {
+        samplesRef.current.push(rms);
+      }
+
+      // Process breathing if not calibrating
+      if (!micState.calibrating && micState.baseline > 0) {
+        processBreathingInput(rms, micState.baseline);
+      }
+
+      requestAnimationFrame(monitor);
+    };
+    monitor();
+  }, [micState.calibrating, micState.baseline]);
+
+  // Process breathing input from microphone
+  const processBreathingInput = useCallback((volume: number, baseline: number) => {
+    if (gameState.gameOver || gameState.isPaused) return;
+
+    const inhaleThreshold = baseline * sensitivity;
+    const exhaleThreshold = baseline * (2 - sensitivity); // Inverse relationship
+
+    if (volume > inhaleThreshold) {
+      handleBreathingInput('inhale', Math.min((volume - baseline) / baseline, 2.0));
+    } else if (volume < exhaleThreshold) {
+      handleBreathingInput('exhale', Math.min((baseline - volume) / baseline, 1.5));
+    }
+  }, [gameState.gameOver, gameState.isPaused, sensitivity]);
+
+  // Breathing input handler
+  const handleBreathingInput = useCallback((breathType: 'inhale' | 'exhale', volume: number = 1.0) => {
+    if (gameState.gameOver || gameState.isPaused) return;
+
+    setGameState(prev => {
+      const newBird = { ...prev.bird };
+      
+      if (breathType === 'inhale') {
+        // Apply upward force
+        newBird.velocityY = Math.max(BREATHING_FORCE * volume, 
+                                   newBird.velocityY + BREATHING_FORCE * volume);
+        setBreathMeter(prev => Math.min(prev + 15, 100));
+      } else if (breathType === 'exhale') {
+        // Apply downward force
+        newBird.velocityY = Math.min(EXHALE_FORCE * volume, 
+                                   newBird.velocityY + EXHALE_FORCE * volume);
+        setBreathMeter(prev => Math.max(prev - 10, 0));
+      }
+
+      breathingTimerRef.current = Date.now();
+
+      return {
+        ...prev,
+        bird: newBird,
+        breathingState: breathType,
+        breathingForceActive: true
+      };
+    });
+  }, [gameState.gameOver, gameState.isPaused]);
 
   // Initialize game
   const initializeGame = useCallback(() => {
@@ -102,36 +307,6 @@ export const FlappyBreath: React.FC<FlappyBreathProps> = ({ darkMode }) => {
 
     startTimeRef.current = Date.now();
   }, []);
-
-  // Breathing input handler
-  const handleBreathingInput = useCallback((breathType: 'inhale' | 'exhale', volume: number = 1.0) => {
-    if (gameState.gameOver || gameState.isPaused) return;
-
-    setGameState(prev => {
-      const newBird = { ...prev.bird };
-      
-      if (breathType === 'inhale') {
-        // Apply upward force
-        newBird.velocityY = Math.max(BREATHING_FORCE * volume, 
-                                   newBird.velocityY + BREATHING_FORCE * volume);
-        setBreathMeter(prev => Math.min(prev + 15, 100));
-      } else if (breathType === 'exhale') {
-        // Apply downward force
-        newBird.velocityY = Math.min(EXHALE_FORCE * volume, 
-                                   newBird.velocityY + EXHALE_FORCE * volume);
-        setBreathMeter(prev => Math.max(prev - 10, 0));
-      }
-
-      breathingTimerRef.current = Date.now();
-
-      return {
-        ...prev,
-        bird: newBird,
-        breathingState: breathType,
-        breathingForceActive: true
-      };
-    });
-  }, [gameState.gameOver, gameState.isPaused]);
 
   // Update bird physics
   const updateBirdPhysics = useCallback((bird: Bird, deltaTime: number): Bird => {
@@ -291,12 +466,21 @@ export const FlappyBreath: React.FC<FlappyBreathProps> = ({ darkMode }) => {
   }, [gameStarted, gameState.isPaused, gameState.gameOver, updateBirdPhysics, updatePipes, checkCollisions, updateScore]);
 
   // Start game
-  const startGame = useCallback(() => {
+  const startGame = useCallback(async () => {
+    // Start microphone if not already active
+    if (!micState.isActive) {
+      const micStarted = await startMicrophoneMonitoring();
+      if (!micStarted) {
+        alert('Microphone access is required to play. Please allow microphone access and try again.');
+        return;
+      }
+    }
+
     initializeGame();
     setGameStarted(true);
     lastTimeRef.current = performance.now();
     gameLoopRef.current = requestAnimationFrame(gameLoop);
-  }, [initializeGame, gameLoop]);
+  }, [initializeGame, gameLoop, micState.isActive, startMicrophoneMonitoring]);
 
   // Pause/Resume game
   const togglePause = useCallback(() => {
@@ -313,7 +497,7 @@ export const FlappyBreath: React.FC<FlappyBreathProps> = ({ darkMode }) => {
     initializeGame();
   }, [initializeGame]);
 
-  // Keyboard controls
+  // Keyboard controls (backup)
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       if (!gameStarted) return;
@@ -400,8 +584,9 @@ export const FlappyBreath: React.FC<FlappyBreathProps> = ({ darkMode }) => {
       if (gameLoopRef.current) {
         cancelAnimationFrame(gameLoopRef.current);
       }
+      stopMicrophoneMonitoring();
     };
-  }, []);
+  }, [stopMicrophoneMonitoring]);
 
   return (
     <div className={`min-h-screen pt-24 pb-12 ${
@@ -438,7 +623,7 @@ export const FlappyBreath: React.FC<FlappyBreathProps> = ({ darkMode }) => {
               <p className={`text-lg ${
                 darkMode ? 'text-gray-300' : 'text-gray-600'
               } font-['Comic_Neue']`}>
-                Master your breathing to control the bird!
+                Control the bird with your breathing!
               </p>
             </div>
           </div>
@@ -533,8 +718,77 @@ export const FlappyBreath: React.FC<FlappyBreathProps> = ({ darkMode }) => {
             )}
           </motion.div>
 
-          {/* Breathing Controls & Meter */}
+          {/* Microphone & Breathing Controls */}
           <div className="w-80 space-y-6">
+            {/* Microphone Status */}
+            <div className={`p-6 rounded-3xl ${
+              darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+            } border-2 shadow-2xl`}>
+              <div className="text-center mb-4">
+                <div className={`mx-auto mb-2 ${
+                  micState.isActive ? 'text-green-500' : 'text-gray-400'
+                }`}>
+                  {micState.isActive ? <Mic size={32} /> : <MicOff size={32} />}
+                </div>
+                <p className={`text-lg font-semibold ${
+                  darkMode ? 'text-gray-300' : 'text-gray-700'
+                } font-['Comic_Neue']`}>
+                  Microphone Status
+                </p>
+              </div>
+              
+              <div className={`text-center text-sm ${
+                darkMode ? 'text-gray-400' : 'text-gray-600'
+              } font-['Comic_Neue'] mb-4`}>
+                {micState.calibrating ? '🔄 Calibrating...' :
+                 micState.isActive ? '✅ Active & Ready' :
+                 micState.hasPermission ? '⏸️ Ready to Start' :
+                 '❌ Permission Needed'}
+              </div>
+
+              {micState.error && (
+                <div className="text-red-500 text-xs mb-4 p-2 bg-red-100 rounded">
+                  {micState.error}
+                </div>
+              )}
+
+              {/* Volume Meter */}
+              <div className={`w-full h-4 ${
+                darkMode ? 'bg-gray-700' : 'bg-gray-200'
+              } rounded-full overflow-hidden mb-4`}>
+                <div
+                  className="h-full bg-gradient-to-r from-green-500 to-red-500 transition-all duration-100"
+                  style={{ width: `${Math.min(100, (micState.volume / 50) * 100)}%` }}
+                />
+              </div>
+
+              <div className="flex space-x-2">
+                <motion.button
+                  onClick={micState.isActive ? stopMicrophoneMonitoring : startMicrophoneMonitoring}
+                  className={`flex-1 px-4 py-2 rounded-xl font-semibold transition-all duration-200 font-['Baloo_2'] ${
+                    micState.isActive 
+                      ? 'bg-red-500 text-white hover:bg-red-600' 
+                      : 'bg-green-500 text-white hover:bg-green-600'
+                  }`}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  {micState.isActive ? 'Stop' : 'Start'} Mic
+                </motion.button>
+                
+                <motion.button
+                  onClick={() => setShowMicTest(!showMicTest)}
+                  className={`px-4 py-2 rounded-xl ${
+                    darkMode ? 'bg-gray-700 text-white' : 'bg-gray-100 text-gray-800'
+                  } hover:scale-105 transition-all duration-200`}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <Settings size={16} />
+                </motion.button>
+              </div>
+            </div>
+
             {/* Breathing Meter */}
             <div className={`p-6 rounded-3xl ${
               darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
@@ -585,14 +839,55 @@ export const FlappyBreath: React.FC<FlappyBreathProps> = ({ darkMode }) => {
               </div>
             </div>
 
-            {/* Breathing Controls */}
+            {/* Sensitivity Control */}
+            {showMicTest && (
+              <div className={`p-6 rounded-3xl ${
+                darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
+              } border-2 shadow-2xl`}>
+                <h3 className={`text-xl font-bold mb-4 ${
+                  darkMode ? 'text-white' : 'text-gray-800'
+                } font-['Baloo_2'] text-center`}>
+                  Microphone Settings
+                </h3>
+                
+                <div className="space-y-4">
+                  <div>
+                    <label className={`block text-sm font-medium mb-2 ${
+                      darkMode ? 'text-gray-300' : 'text-gray-700'
+                    } font-['Comic_Neue']`}>
+                      Sensitivity: {sensitivity.toFixed(1)}x
+                    </label>
+                    <input
+                      type="range"
+                      min="1.0"
+                      max="3.0"
+                      step="0.1"
+                      value={sensitivity}
+                      onChange={(e) => setSensitivity(parseFloat(e.target.value))}
+                      className="w-full"
+                    />
+                  </div>
+
+                  <div className={`text-xs ${
+                    darkMode ? 'text-gray-400' : 'text-gray-600'
+                  } font-['Comic_Neue']`}>
+                    <p><strong>Volume:</strong> {micState.volume.toFixed(1)}</p>
+                    <p><strong>Baseline:</strong> {micState.baseline.toFixed(1)}</p>
+                    <p><strong>Inhale Threshold:</strong> {(micState.baseline * sensitivity).toFixed(1)}</p>
+                    <p><strong>Exhale Threshold:</strong> {(micState.baseline * (2 - sensitivity)).toFixed(1)}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Manual Controls (Backup) */}
             <div className={`p-6 rounded-3xl ${
               darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
             } border-2 shadow-2xl`}>
               <h3 className={`text-xl font-bold mb-4 ${
                 darkMode ? 'text-white' : 'text-gray-800'
               } font-['Baloo_2'] text-center`}>
-                Breathing Controls
+                Manual Controls
               </h3>
               
               <div className="space-y-4">
@@ -669,6 +964,12 @@ export const FlappyBreath: React.FC<FlappyBreathProps> = ({ darkMode }) => {
                     <span>Breathing State:</span>
                     <span className="capitalize">{gameState.breathingState}</span>
                   </div>
+                  <div className={`flex justify-between ${
+                    darkMode ? 'text-gray-300' : 'text-gray-600'
+                  } font-['Comic_Neue']`}>
+                    <span>Mic Active:</span>
+                    <span>{micState.isActive ? '✅' : '❌'}</span>
+                  </div>
                 </div>
               </div>
             )}
@@ -688,15 +989,23 @@ export const FlappyBreath: React.FC<FlappyBreathProps> = ({ darkMode }) => {
           <h3 className={`text-xl font-bold mb-3 ${
             darkMode ? 'text-white' : 'text-gray-800'
           } font-['Baloo_2']`}>
-            Advanced Breathing Controls
+            How to Play with Breathing
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="text-center">
+              <div className="text-2xl mb-2">🎤</div>
+              <p className={`text-sm ${
+                darkMode ? 'text-gray-300' : 'text-gray-600'
+              } font-['Comic_Neue']`}>
+                <strong>Microphone Control:</strong> Breathe into your microphone to control the bird naturally
+              </p>
+            </div>
             <div className="text-center">
               <div className="text-2xl mb-2">🫁</div>
               <p className={`text-sm ${
                 darkMode ? 'text-gray-300' : 'text-gray-600'
               } font-['Comic_Neue']`}>
-                <strong>Inhale (Space/W/↑):</strong> Powerful upward force to lift the bird
+                <strong>Inhale:</strong> Breathe in deeply to make the bird rise up
               </p>
             </div>
             <div className="text-center">
@@ -704,17 +1013,16 @@ export const FlappyBreath: React.FC<FlappyBreathProps> = ({ darkMode }) => {
               <p className={`text-sm ${
                 darkMode ? 'text-gray-300' : 'text-gray-600'
               } font-['Comic_Neue']`}>
-                <strong>Exhale (S/↓):</strong> Controlled descent with gentle downward force
+                <strong>Exhale:</strong> Breathe out to make the bird descend gently
               </p>
             </div>
-            <div className="text-center">
-              <div className="text-2xl mb-2">🧘</div>
-              <p className={`text-sm ${
-                darkMode ? 'text-gray-300' : 'text-gray-600'
-              } font-['Comic_Neue']`}>
-                <strong>Mindful Control:</strong> Master your breathing rhythm for perfect flight
-              </p>
-            </div>
+          </div>
+          <div className="mt-4 text-center">
+            <p className={`text-sm ${
+              darkMode ? 'text-gray-400' : 'text-gray-500'
+            } font-['Comic_Neue']`}>
+              💡 <strong>Tip:</strong> The game calibrates to your breathing pattern. Breathe normally for 3 seconds when starting!
+            </p>
           </div>
         </motion.div>
       </div>
