@@ -1,6 +1,5 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import emotiBitService from './src/api/emotibit';
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -9,36 +8,9 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:5173',
+        target: 'http://localhost:5000',
         changeOrigin: true,
-        configure: (proxy, options) => {
-          proxy.on('proxyReq', (proxyReq, req, res) => {
-            if (req.url?.startsWith('/api/emotibit')) {
-              let body = '';
-              req.on('data', chunk => {
-                body += chunk.toString();
-              });
-              
-              req.on('end', async () => {
-                try {
-                  const requestData = body ? JSON.parse(body) : {};
-                  const useEmotiBit = requestData.useEmotiBit || false;
-                  
-                  const reading = await emotiBitService.getReading(useEmotiBit);
-                  
-                  res.writeHead(200, { 'Content-Type': 'application/json' });
-                  res.end(JSON.stringify(reading));
-                } catch (error) {
-                  res.writeHead(500, { 'Content-Type': 'application/json' });
-                  res.end(JSON.stringify({ error: 'Failed to get biometric data' }));
-                }
-              });
-              
-              // Prevent the proxy from forwarding the request
-              proxyReq.destroy();
-            }
-          });
-        }
+        secure: false
       }
     }
   },

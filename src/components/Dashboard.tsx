@@ -129,13 +129,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ darkMode }) => {
           // Determine recommended game based on stress score
           const game = getRecommendedGame(data.score);
           setRecommendedGame(game);
-        }
-      } catch (error) {
-        console.log('Using fallback data generation');
-        // Generate fallback data
-        const fallbackData = generateSimulatedData();
-        setBiometricData(fallbackData);
+        // Use built-in service directly
+        const { emotiBitService } = await import('../api/emotibit');
+        const data = await emotiBitService.getReading(useEmotiBit && isConnected);
+        setBiometricData(data);
         setPythonServiceActive(false);
+        const game = getRecommendedGame(data.score);
+        setRecommendedGame(game);
+        return;
         setRecommendedGame(getRecommendedGame(fallbackData.score));
       }
     };
