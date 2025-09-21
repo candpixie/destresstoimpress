@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Home, Activity, Heart, Zap, Wifi, WifiOff, ToggleLeft, ToggleRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { emotiBitService } from '../api/emotibit';
+import emotiBitService from '../api/emotibit';
 
 interface DashboardProps {
   darkMode: boolean;
