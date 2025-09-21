@@ -99,14 +99,20 @@ export const Dashboard: React.FC<DashboardProps> = ({ darkMode }) => {
   useEffect(() => {
     const fetchBiometricData = async () => {
       try {
-        // Try Python service first
-        let response = await fetch('http://localhost:5000/api/emotibit');
+        let response;
         let usingPythonService = false;
         
-        if (response.ok) {
-          usingPythonService = true;
-          setPythonServiceActive(true);
-        } else {
+        // Try Python service first (real EmotiBit integration)
+        try {
+          response = await fetch('http://localhost:5000/api/emotibit');
+          if (response.ok) {
+            usingPythonService = true;
+            setPythonServiceActive(true);
+          } else {
+            throw new Error('Python service not available');
+          }
+        } catch (pythonError) {
+          console.log('Python service not available, using built-in service');
           // Fallback to built-in service
           response = await fetch('/api/emotibit', {
             method: 'POST',
@@ -125,7 +131,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ darkMode }) => {
           setRecommendedGame(game);
         }
       } catch (error) {
-        console.error('Failed to fetch biometric data:', error);
+        console.log('Using fallback data generation');
         // Generate fallback data
         const fallbackData = generateSimulatedData();
         setBiometricData(fallbackData);
@@ -450,17 +456,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ darkMode }) => {
                   {pythonServiceActive ? (
                     <span className="flex items-center justify-center space-x-2">
                       <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                      <span>Python ML Service Active</span>
+                      <span>🔴 REAL EmotiBit Data (Python ML Service)</span>
                     </span>
                   ) : useEmotiBit && isConnected ? (
                     <span className="flex items-center justify-center space-x-2">
                       <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                      <span>Live EmotiBit Data</span>
+                      <span>🟡 EmotiBit Connected (Built-in Service)</span>
                     </span>
                   ) : (
                     <span className="flex items-center justify-center space-x-2">
                       <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
-                      <span>Simulated Demo Data</span>
+                      <span>🔵 Demo Mode (Simulated Data)</span>
                     </span>
                   )}
                   <p className="mt-1">
@@ -468,7 +474,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ darkMode }) => {
                   </p>
                   {pythonServiceActive && (
                     <p className="mt-1 text-xs">
-                      🤖 Using trained ML model for stress prediction
+                      🤖 Using YOUR trained ML model with REAL EmotiBit hardware data
                     </p>
                   )}
                 </div>
