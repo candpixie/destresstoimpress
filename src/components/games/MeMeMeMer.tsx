@@ -248,11 +248,11 @@ export const MeMeMeMer: React.FC<MeMeMeMemerProps> = ({ darkMode }) => {
                     } font-['Baloo_2'] text-center`}>
                       {currentMeme.title}
                     </h3>
-                    {currentMeme.score && (
+                    {currentMeme.subreddit && (
                       <div className={`text-center mb-4 ${
                         darkMode ? 'text-gray-300' : 'text-gray-600'
                       } font-['Comic_Neue']`}>
-                        ⬆️ {currentMeme.score} upvotes {currentMeme.subreddit && `• r/${currentMeme.subreddit}`}
+                        📚 Content inspired by Reddit analysis • {currentMeme.subreddit}
                       </div>
                     )}
                     <div className="flex justify-center">
@@ -269,20 +269,13 @@ export const MeMeMeMer: React.FC<MeMeMeMemerProps> = ({ darkMode }) => {
                         }}
                       />
                     </div>
-                    {currentMeme.redditUrl && (
-                      <div className="text-center mt-4">
-                        <a
-                          href={currentMeme.redditUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={`text-sm ${
-                            darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-800'
-                          } underline font-['Comic_Neue']`}
-                        >
-                          View on Reddit 🔗
-                        </a>
-                      </div>
-                    )}
+                    <div className="text-center mt-4">
+                      <p className={`text-sm ${
+                        darkMode ? 'text-gray-400' : 'text-gray-600'
+                      } font-['Comic_Neue']`}>
+                        Educational content curated from Reddit community analysis 🎓
+                      </p>
+                    </div>
                   </div>
                 </motion.div>
               )}

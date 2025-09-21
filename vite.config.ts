@@ -6,11 +6,6 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/reddit-api': {
-        target: 'https://api.reddit.com',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/reddit-api/, '')
-      }
     }
   },
   optimizeDeps: {
