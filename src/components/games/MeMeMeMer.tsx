@@ -2,23 +2,53 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Home, Shuffle, Puzzle, RotateCcw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { fallbackMemes } from '../../data/fallbackContent';
-import { Meme } from '../../types';
+import { getUniqueRedditMeme, resetUsedMemes } from '../../services/memeService';
 
 interface MeMeMeMemerProps {
   darkMode: boolean;
 }
 
+interface MemeData {
+  id: string;
+  title: string;
+  url: string;
+  thumbnail: string;
+  redditUrl?: string;
+  score?: number;
+  subreddit?: string;
+}
 export const MeMeMeMer: React.FC<MeMeMeMemerProps> = ({ darkMode }) => {
   const navigate = useNavigate();
-  const [currentMeme, setCurrentMeme] = useState<Meme | null>(null);
+  const [currentMeme, setCurrentMeme] = useState<MemeData | null>(null);
   const [showPuzzle, setShowPuzzle] = useState(false);
   const [puzzlePieces, setPuzzlePieces] = useState<number[]>([]);
   const [puzzleSolved, setPuzzleSolved] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const generateMeme = () => {
-    const randomMeme = fallbackMemes[Math.floor(Math.random() * fallbackMemes.length)];
-    setCurrentMeme(randomMeme);
+  const generateMeme = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const meme = await getUniqueRedditMeme();
+      if (meme) {
+        setCurrentMeme(meme);
+        setShowPuzzle(false);
+        setPuzzleSolved(false);
+      } else {
+        setError('No appropriate memes found. Try again!');
+      }
+    } catch (err) {
+      console.error('Error fetching meme:', err);
+      setError('Failed to fetch meme. Please check your internet connection.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resetMemeHistory = () => {
+    resetUsedMemes();
     setShowPuzzle(false);
     setPuzzleSolved(false);
   };
@@ -94,12 +124,15 @@ export const MeMeMeMer: React.FC<MeMeMeMemerProps> = ({ darkMode }) => {
           <div className="flex space-x-3">
             <motion.button
               onClick={generateMeme}
-              className="px-6 py-3 bg-gradient-to-r from-red-500 to-orange-500 text-white rounded-full font-semibold shadow-lg hover:shadow-xl transition-all duration-200 font-['Baloo_2'] flex items-center space-x-2"
+              disabled={loading}
+              className={`px-6 py-3 bg-gradient-to-r from-red-500 to-orange-500 text-white rounded-full font-semibold shadow-lg hover:shadow-xl transition-all duration-200 font-['Baloo_2'] flex items-center space-x-2 ${
+                loading ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
               <Shuffle size={16} />
-              <span>New Meme</span>
+              <span>{loading ? 'Loading...' : 'New Meme'}</span>
             </motion.button>
             
             {currentMeme && (
@@ -115,6 +148,19 @@ export const MeMeMeMer: React.FC<MeMeMeMemerProps> = ({ darkMode }) => {
                 <span>Make Puzzle</span>
               </motion.button>
             )}
+            
+            <motion.button
+              onClick={resetMemeHistory}
+              className={`px-4 py-3 ${
+                darkMode ? 'bg-gray-700 text-white' : 'bg-white text-gray-800'
+              } rounded-full font-semibold shadow-lg hover:shadow-xl transition-all duration-200 font-['Baloo_2'] flex items-center space-x-2`}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              title="Reset meme history to see repeated memes"
+            >
+              <RotateCcw size={16} />
+              <span>Reset</span>
+            </motion.button>
           </div>
         </motion.div>
 
@@ -125,6 +171,32 @@ export const MeMeMeMer: React.FC<MeMeMeMemerProps> = ({ darkMode }) => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
         >
+          {/* Error Message */}
+          {error && (
+            <motion.div
+              className={`text-center py-8 rounded-3xl ${
+                darkMode ? 'bg-red-900/50 border-red-700' : 'bg-red-50/50 border-red-200'
+              } border backdrop-blur-sm`}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <div className="text-4xl mb-4">😅</div>
+              <p className={`text-lg ${
+                darkMode ? 'text-red-300' : 'text-red-700'
+              } font-['Comic_Neue']`}>
+                {error}
+              </p>
+              <motion.button
+                onClick={generateMeme}
+                className="mt-4 px-6 py-2 bg-gradient-to-r from-red-500 to-orange-500 text-white rounded-full font-semibold shadow-lg hover:shadow-xl transition-all duration-200 font-['Baloo_2']"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Try Again
+              </motion.button>
+            </motion.div>
+          )}
+
           {!currentMeme ? (
             /* Welcome Screen */
             <motion.div
@@ -147,11 +219,14 @@ export const MeMeMeMer: React.FC<MeMeMeMemerProps> = ({ darkMode }) => {
               </p>
               <motion.button
                 onClick={generateMeme}
-                className="px-10 py-4 bg-gradient-to-r from-red-500 to-orange-500 text-white rounded-full font-bold text-xl shadow-lg hover:shadow-xl transition-all duration-200 font-['Baloo_2']"
+                disabled={loading}
+                className={`px-10 py-4 bg-gradient-to-r from-red-500 to-orange-500 text-white rounded-full font-bold text-xl shadow-lg hover:shadow-xl transition-all duration-200 font-['Baloo_2'] ${
+                  loading ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                Generate Your First Meme! 🎲
+                {loading ? 'Loading Meme... 🔄' : 'Generate Your First Meme! 🎲'}
               </motion.button>
             </motion.div>
           ) : (
@@ -173,13 +248,41 @@ export const MeMeMeMer: React.FC<MeMeMeMemerProps> = ({ darkMode }) => {
                     } font-['Baloo_2'] text-center`}>
                       {currentMeme.title}
                     </h3>
+                    {currentMeme.score && (
+                      <div className={`text-center mb-4 ${
+                        darkMode ? 'text-gray-300' : 'text-gray-600'
+                      } font-['Comic_Neue']`}>
+                        ⬆️ {currentMeme.score} upvotes {currentMeme.subreddit && `• r/${currentMeme.subreddit}`}
+                      </div>
+                    )}
                     <div className="flex justify-center">
                       <img
                         src={currentMeme.url}
                         alt={currentMeme.title}
                         className="max-w-full max-h-96 rounded-2xl shadow-lg object-contain"
+                        onError={(e) => {
+                          // Fallback to thumbnail if main image fails
+                          const target = e.target as HTMLImageElement;
+                          if (target.src !== currentMeme.thumbnail) {
+                            target.src = currentMeme.thumbnail;
+                          }
+                        }}
                       />
                     </div>
+                    {currentMeme.redditUrl && (
+                      <div className="text-center mt-4">
+                        <a
+                          href={currentMeme.redditUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={`text-sm ${
+                            darkMode ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-800'
+                          } underline font-['Comic_Neue']`}
+                        >
+                          View on Reddit 🔗
+                        </a>
+                      </div>
+                    )}
                   </div>
                 </motion.div>
               )}
@@ -291,6 +394,12 @@ export const MeMeMeMer: React.FC<MeMeMeMemerProps> = ({ darkMode }) => {
                         src={currentMeme.url}
                         alt="Reference"
                         className="max-w-full max-h-64 rounded-2xl shadow-lg object-contain opacity-75"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          if (target.src !== currentMeme.thumbnail) {
+                            target.src = currentMeme.thumbnail;
+                          }
+                        }}
                       />
                     </div>
                   </motion.div>
@@ -321,7 +430,7 @@ export const MeMeMeMer: React.FC<MeMeMeMemerProps> = ({ darkMode }) => {
               <p className={`text-sm ${
                 darkMode ? 'text-gray-300' : 'text-gray-600'
               } font-['Comic_Neue']`}>
-                Generate random memes to discover new content and have a good laugh
+                Fetch fresh educational and wholesome memes from Reddit
               </p>
             </div>
             <div className="text-center">
@@ -337,7 +446,7 @@ export const MeMeMeMer: React.FC<MeMeMeMemerProps> = ({ darkMode }) => {
               <p className={`text-sm ${
                 darkMode ? 'text-gray-300' : 'text-gray-600'
               } font-['Comic_Neue']`}>
-                All content is family-friendly and designed to boost your mood!
+                All content is filtered for educational, positive, and family-friendly material
               </p>
             </div>
           </div>
