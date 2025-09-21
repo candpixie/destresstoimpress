@@ -19,17 +19,17 @@ export const GameCard: React.FC<GameCardProps> = ({ game, darkMode, onClick }) =
       }}
       whileHover={{ 
         scale: 1.05,
+        y: -5,
         boxShadow: `0 20px 40px -15px ${game.color}40`
       }}
       whileTap={{ scale: 0.98 }}
       onClick={onClick}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
+      layout
+      layoutId={`game-card-${game.id}`}
     >
       {/* Glow effect */}
       <div 
-        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-3xl"
+        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-all duration-500 rounded-3xl"
         style={{
           background: `linear-gradient(135deg, ${game.color}20, transparent)`
         }}
@@ -37,38 +37,61 @@ export const GameCard: React.FC<GameCardProps> = ({ game, darkMode, onClick }) =
       
       <div className="relative z-10">
         {/* Icon */}
-        <div className="text-6xl mb-4 filter drop-shadow-lg">
+        <motion.div 
+          className="text-6xl mb-4 filter drop-shadow-lg"
+          whileHover={{ scale: 1.1, rotate: 5 }}
+          transition={{ type: "spring", stiffness: 300 }}
+        >
           {game.icon}
-        </div>
+        </motion.div>
         
         {/* Title */}
-        <h3 className={`text-2xl font-bold mb-3 ${
+        <motion.h3 
+          className={`text-2xl font-bold mb-3 ${
           darkMode ? 'text-white' : 'text-gray-800'
         } font-['Baloo_2']`}>
+          initial={{ opacity: 0, x: -20 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.2 }}
+        >
           {game.title}
-        </h3>
+        </motion.h3>
         
         {/* Tagline */}
-        <p className={`text-base mb-6 ${
+        <motion.p 
+          className={`text-base mb-6 ${
           darkMode ? 'text-gray-300' : 'text-gray-600'
         } leading-relaxed font-['Comic_Neue']`}>
+          initial={{ opacity: 0, x: -20 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.3 }}
+        >
           {game.tagline}
-        </p>
+        </motion.p>
         
         {/* Play button */}
         <motion.button
           className="px-8 py-3 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-full font-semibold shadow-lg hover:shadow-xl transition-all duration-200 font-['Baloo_2']"
-          whileHover={{ scale: 1.05 }}
+          whileHover={{ scale: 1.05, boxShadow: "0 10px 30px -10px rgba(236, 72, 153, 0.5)" }}
           whileTap={{ scale: 0.95 }}
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
         >
           Play Now
         </motion.button>
       </div>
       
       {/* Decorative elements */}
-      <div className="absolute top-4 right-4 w-20 h-20 rounded-full opacity-10"
+      <motion.div 
+        className="absolute top-4 right-4 w-20 h-20 rounded-full opacity-10"
+        animate={{ rotate: 360, scale: [1, 1.1, 1] }}
+        transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
            style={{ background: game.color }} />
-      <div className="absolute bottom-4 left-4 w-12 h-12 rounded-full opacity-5"
+      <motion.div 
+        className="absolute bottom-4 left-4 w-12 h-12 rounded-full opacity-5"
+        animate={{ rotate: -360, scale: [1, 0.9, 1] }}
+        transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
            style={{ background: game.color }} />
     </motion.div>
   );

@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, useScroll, useTransform } from 'framer-motion';
 import { GameCard } from './GameCard';
 import { GameCard as GameCardType } from '../types';
 import { useNavigate } from 'react-router-dom';
@@ -45,6 +45,9 @@ const games: GameCardType[] = [
 
 export const LandingPage: React.FC<LandingPageProps> = ({ darkMode }) => {
   const navigate = useNavigate();
+  const { scrollYProgress } = useScroll();
+  const y = useTransform(scrollYProgress, [0, 1], ['0%', '50%']);
+  const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0.3]);
 
   const handleGameClick = (path: string) => {
     navigate(path);
@@ -60,18 +63,25 @@ export const LandingPage: React.FC<LandingPageProps> = ({ darkMode }) => {
         {/* Hero Section */}
         <motion.div
           className="text-center mb-16"
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
+          style={{ y, opacity }}
         >
           <motion.h1
             className={`text-6xl md:text-7xl font-bold mb-6 ${
               darkMode ? 'text-white' : 'text-gray-800'
             } font-['Baloo_2']`}
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
             animate={{ 
+              opacity: 1,
+              y: 0,
               backgroundPosition: ['0%', '100%', '0%'],
             }}
-            transition={{ duration: 3, repeat: Infinity }}
+            transition={{ 
+              duration: 0.8,
+              delay: 0.2,
+              backgroundPosition: { duration: 3, repeat: Infinity }
+            }}
             style={{
               background: 'linear-gradient(90deg, #ec4899, #8b5cf6, #3b82f6, #ec4899)',
               backgroundSize: '200% 100%',
@@ -87,9 +97,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ darkMode }) => {
             className={`text-xl md:text-2xl mb-8 ${
               darkMode ? 'text-gray-300' : 'text-gray-600'
             } max-w-2xl mx-auto font-['Comic_Neue'] leading-relaxed`}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3, duration: 0.8 }}
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, duration: 0.8 }}
           >
             Entertainment that adapts to your mood. Four games designed to help you unwind, 
             express yourself, and find your perfect vibe.
@@ -97,8 +107,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ darkMode }) => {
           
           <motion.div
             className="flex flex-wrap justify-center gap-4 text-sm font-medium"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6, duration: 0.8 }}
           >
             {['🧘 Mindful Gaming', '🎨 Creative Expression', '😄 Mood Boosting', '🎵 Personalized Content'].map((feature, index) => (
@@ -107,10 +117,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({ darkMode }) => {
                 className={`px-4 py-2 rounded-full ${
                   darkMode ? 'bg-gray-800/50 text-gray-300' : 'bg-white/50 text-gray-700'
                 } backdrop-blur-sm border ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, y: 20, scale: 0.8 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
                 transition={{ delay: 0.8 + index * 0.1 }}
-                whileHover={{ scale: 1.05 }}
+                whileHover={{ scale: 1.05, y: -2 }}
+                whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                viewport={{ once: true, margin: "-100px" }}
               >
                 {feature}
               </motion.span>
@@ -119,13 +131,26 @@ export const LandingPage: React.FC<LandingPageProps> = ({ darkMode }) => {
         </motion.div>
 
         {/* Games Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-8 max-w-7xl mx-auto">
+        <motion.div 
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-4 gap-8 max-w-7xl mx-auto"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.6, staggerChildren: 0.1 }}
+        >
           {games.map((game, index) => (
             <motion.div
               key={game.id}
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 + 0.5, duration: 0.6 }}
+              initial={{ opacity: 0, y: 50, scale: 0.9 }}
+              whileInView={{ opacity: 1, y: 0, scale: 1 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ 
+                delay: index * 0.1, 
+                duration: 0.6,
+                type: "spring",
+                stiffness: 100
+              }}
+              whileHover={{ y: -10, transition: { duration: 0.2 } }}
             >
               <GameCard
                 game={game}
@@ -134,14 +159,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({ darkMode }) => {
               />
             </motion.div>
           ))}
-        </div>
+        </motion.div>
 
         {/* Additional Info */}
         <motion.div
           className="text-center mt-16"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.2, duration: 0.8 }}
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-100px" }}
+          transition={{ duration: 0.8 }}
         >
           <div className={`inline-flex items-center space-x-2 px-6 py-3 rounded-full ${
             darkMode ? 'bg-gray-800/50 text-gray-300' : 'bg-white/50 text-gray-600'

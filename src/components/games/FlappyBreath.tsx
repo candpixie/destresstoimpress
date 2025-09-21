@@ -112,7 +112,12 @@ export const FlappyBreath: React.FC<FlappyBreathProps> = ({ darkMode }) => {
     }`}>
       <div className="container mx-auto px-4 max-w-4xl">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <motion.div 
+          className="flex items-center justify-between mb-8"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
           <div className="flex items-center space-x-4">
             <motion.button
               onClick={() => navigate('/')}
@@ -146,9 +151,14 @@ export const FlappyBreath: React.FC<FlappyBreathProps> = ({ darkMode }) => {
               Score: {score}
             </div>
           </div>
-        </div>
+        </motion.div>
 
-        <div className="flex gap-8">
+        <motion.div 
+          className="flex gap-8"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+        >
           {/* Game Area */}
           <motion.div
             className={`flex-1 relative h-96 rounded-3xl overflow-hidden ${
@@ -257,16 +267,17 @@ export const FlappyBreath: React.FC<FlappyBreathProps> = ({ darkMode }) => {
               </p>
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Instructions */}
         <motion.div
           className={`mt-8 p-6 rounded-2xl ${
             darkMode ? 'bg-gray-800/50 border-gray-700' : 'bg-white/50 border-gray-200'
           } border backdrop-blur-sm`}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-50px" }}
+          transition={{ duration: 0.6 }}
         >
           <h3 className={`text-xl font-bold mb-3 ${
             darkMode ? 'text-white' : 'text-gray-800'

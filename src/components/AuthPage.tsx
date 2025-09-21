@@ -57,12 +57,17 @@ export const AuthPage: React.FC<AuthPageProps> = ({ darkMode }) => {
             ? 'bg-gray-800/80 border-gray-700' 
             : 'bg-white/80 border-gray-200'
         } border`}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
+        initial={{ opacity: 0, y: 50, scale: 0.9 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.6, type: "spring", stiffness: 100 }}
       >
         {/* Header */}
-        <div className="text-center mb-8">
+        <motion.div 
+          className="text-center mb-8"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2, duration: 0.5 }}
+        >
           <motion.div
             className="text-6xl mb-4"
             animate={{ rotate: [0, 10, -10, 0] }}
@@ -70,26 +75,36 @@ export const AuthPage: React.FC<AuthPageProps> = ({ darkMode }) => {
           >
             🎮
           </motion.div>
-          <h2 className={`text-3xl font-bold mb-2 ${
+          <motion.h2 
+            className={`text-3xl font-bold mb-2 ${
             darkMode ? 'text-white' : 'text-gray-800'
           } font-['Baloo_2']`}>
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3, duration: 0.5 }}
+          >
             {isSignUp ? 'Join the Fun!' : 'Welcome Back!'}
-          </h2>
-          <p className={`${
+          </motion.h2>
+          <motion.p 
+            className={`${
             darkMode ? 'text-gray-300' : 'text-gray-600'
           } font-['Comic_Neue']`}>
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.4, duration: 0.5 }}
+          >
             {isSignUp ? 'Create your account to start playing' : 'Sign in to continue your journey'}
-          </p>
-        </div>
+          </motion.p>
+        </motion.div>
 
         {/* Security note */}
         <motion.div
           className={`mb-6 p-4 rounded-2xl ${
             darkMode ? 'bg-blue-900/30 border-blue-700' : 'bg-blue-50 border-blue-200'
           } border flex items-start space-x-3`}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
+          initial={{ opacity: 0, x: -30 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.5, duration: 0.5 }}
         >
           <Shield className={`mt-0.5 flex-shrink-0 ${
             darkMode ? 'text-blue-400' : 'text-blue-600'
@@ -102,9 +117,19 @@ export const AuthPage: React.FC<AuthPageProps> = ({ darkMode }) => {
         </motion.div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <motion.form 
+          onSubmit={handleSubmit} 
+          className="space-y-6"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6, duration: 0.5 }}
+        >
           {/* Email field */}
-          <div>
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.7, duration: 0.5 }}
+          >
             <label className={`block text-sm font-medium mb-2 ${
               darkMode ? 'text-gray-300' : 'text-gray-700'
             }`}>
@@ -127,10 +152,14 @@ export const AuthPage: React.FC<AuthPageProps> = ({ darkMode }) => {
                 placeholder="Enter your email"
               />
             </div>
-          </div>
+          </motion.div>
 
           {/* Password field */}
-          <div>
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.8, duration: 0.5 }}
+          >
             <label className={`block text-sm font-medium mb-2 ${
               darkMode ? 'text-gray-300' : 'text-gray-700'
             }`}>
@@ -163,14 +192,15 @@ export const AuthPage: React.FC<AuthPageProps> = ({ darkMode }) => {
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
             </div>
-          </div>
+          </motion.div>
 
           {/* Error message */}
           {error && (
             <motion.p
               className="text-red-500 text-sm text-center"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
             >
               {error}
             </motion.p>
@@ -181,28 +211,38 @@ export const AuthPage: React.FC<AuthPageProps> = ({ darkMode }) => {
             type="submit"
             disabled={loading}
             className={`w-full py-3 px-4 rounded-xl font-semibold text-white bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl font-['Baloo_2']`}
-            whileHover={{ scale: loading ? 1 : 1.02 }}
+            whileHover={{ scale: loading ? 1 : 1.02, boxShadow: "0 10px 30px -10px rgba(236, 72, 153, 0.5)" }}
             whileTap={{ scale: loading ? 1 : 0.98 }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.9, duration: 0.5 }}
           >
             {loading ? 'Please wait...' : (isSignUp ? 'Sign Up' : 'Sign In')}
           </motion.button>
-        </form>
+        </motion.form>
 
         {/* Toggle sign up/in */}
-        <div className="mt-6 text-center">
+        <motion.div 
+          className="mt-6 text-center"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.0, duration: 0.5 }}
+        >
           <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'} font-['Comic_Neue']`}>
             {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
-            <button
+            <motion.button
               onClick={() => {
                 setIsSignUp(!isSignUp);
                 setError('');
               }}
               className="text-purple-500 hover:text-purple-600 font-semibold transition-colors duration-200"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
               {isSignUp ? 'Sign In' : 'Sign Up'}
-            </button>
+            </motion.button>
           </p>
-        </div>
+        </motion.div>
       </motion.div>
     </div>
   );

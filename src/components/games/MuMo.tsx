@@ -65,7 +65,12 @@ export const MuMo: React.FC<MuMoProps> = ({ darkMode }) => {
     }`}>
       <div className="container mx-auto px-4 max-w-6xl">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <motion.div 
+          className="flex items-center justify-between mb-8"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
           <div className="flex items-center space-x-4">
             <motion.button
               onClick={() => navigate('/')}
@@ -104,7 +109,7 @@ export const MuMo: React.FC<MuMoProps> = ({ darkMode }) => {
               </div>
             </div>
           )}
-        </div>
+        </motion.div>
 
         {/* Mood Input */}
         {!recommendations && (
@@ -112,8 +117,9 @@ export const MuMo: React.FC<MuMoProps> = ({ darkMode }) => {
             className={`mb-8 p-8 rounded-3xl ${
               darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
             } border shadow-2xl`}
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
           >
             <div className="text-center mb-6">
               <div className="text-6xl mb-4">🎭</div>
@@ -184,8 +190,9 @@ export const MuMo: React.FC<MuMoProps> = ({ darkMode }) => {
         {recommendations && (
           <motion.div
             className="space-y-8"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-50px" }}
             transition={{ duration: 0.6 }}
           >
             {/* Mood Summary */}
@@ -234,10 +241,11 @@ export const MuMo: React.FC<MuMoProps> = ({ darkMode }) => {
                     className={`block p-6 rounded-2xl ${
                       darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
                     } border shadow-lg hover:shadow-2xl transition-all duration-300 group`}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
+                    initial={{ opacity: 0, y: 30, scale: 0.95 }}
+                    whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                    viewport={{ once: true, margin: "-50px" }}
                     transition={{ delay: index * 0.1 }}
-                    whileHover={{ scale: 1.02, y: -5 }}
+                    whileHover={{ scale: 1.02, y: -8 }}
                   >
                     <div className="flex items-start space-x-4">
                       <img
@@ -285,10 +293,11 @@ export const MuMo: React.FC<MuMoProps> = ({ darkMode }) => {
                     className={`block p-6 rounded-2xl ${
                       darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'
                     } border shadow-lg hover:shadow-2xl transition-all duration-300 group`}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
+                   initial={{ opacity: 0, y: 30, scale: 0.95 }}
+                   whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                   viewport={{ once: true, margin: "-50px" }}
                     transition={{ delay: (index + 2) * 0.1 }}
-                    whileHover={{ scale: 1.02, y: -5 }}
+                   whileHover={{ scale: 1.02, y: -8 }}
                   >
                     <div className="flex items-start space-x-4">
                       <img
@@ -323,9 +332,10 @@ export const MuMo: React.FC<MuMoProps> = ({ darkMode }) => {
             className={`p-6 rounded-2xl ${
               darkMode ? 'bg-gray-800/50 border-gray-700' : 'bg-white/50 border-gray-200'
             } border backdrop-blur-sm`}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-50px" }}
+            transition={{ duration: 0.6 }}
           >
             <h3 className={`text-xl font-bold mb-4 ${
               darkMode ? 'text-white' : 'text-gray-800'
