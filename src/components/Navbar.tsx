@@ -41,10 +41,8 @@ export const Navbar: React.FC<NavbarProps> = ({ darkMode, toggleDarkMode }) => {
             style={{ cursor: 'pointer' }}
           >
             <Gamepad2 className="text-3xl text-pink-500" />
-            <span className={`text-2xl font-bold bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 bg-clip-text text-transparent font-['Baloo_2']`}>
             <span className={`text-2xl font-bold text-gradient font-display`}>
               Destress2Impress
-            </span>
             </span>
           </motion.div>
 
