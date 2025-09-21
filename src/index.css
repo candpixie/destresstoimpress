@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Comic+Neue:wght@300;400;700&family=Baloo+2:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500;1,600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,16 +6,16 @@
 
 @layer base {
   body {
-    font-family: 'Comic Neue', cursive;
+    font-family: 'Crimson Text', serif;
     line-height: 1.6;
   }
   
-  .font-baloo {
-    font-family: 'Baloo 2', cursive;
+  .font-display {
+    font-family: 'Playfair Display', serif;
   }
   
-  .font-comic {
-    font-family: 'Comic Neue', cursive;
+  .font-body {
+    font-family: 'Crimson Text', serif;
   }
   
   * {
@@ -25,12 +25,20 @@
 
 @layer utilities {
   .text-gradient {
-    background: linear-gradient(90deg, #ec4899, #8b5cf6, #3b82f6);
+    background: linear-gradient(135deg, #f8b5c1, #a8d5ba, #87ceeb, #b19cd9, #dda0dd);
     background-size: 200% 100%;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     animation: gradient-shift 3s ease-in-out infinite;
+  }
+  
+  .bg-brand-gradient {
+    background: linear-gradient(135deg, #f8b5c1 0%, #a8d5ba 25%, #87ceeb 50%, #b19cd9 75%, #dda0dd 100%);
+  }
+  
+  .bg-brand-gradient-soft {
+    background: linear-gradient(135deg, rgba(248, 181, 193, 0.1) 0%, rgba(168, 213, 186, 0.1) 25%, rgba(135, 206, 235, 0.1) 50%, rgba(177, 156, 217, 0.1) 75%, rgba(221, 160, 221, 0.1) 100%);
   }
   
   @keyframes gradient-shift {
@@ -48,7 +56,7 @@
   }
   
   .hover-glow:hover {
-    box-shadow: 0 0 30px rgba(236, 72, 153, 0.3);
+    box-shadow: 0 0 30px rgba(248, 181, 193, 0.4);
   }
   
   /* Custom scrollbar */
@@ -61,7 +69,12 @@
   }
   
   ::-webkit-scrollbar-thumb {
-    @apply bg-pink-300 dark:bg-pink-600 rounded-full hover:bg-pink-400 dark:hover:bg-pink-500;
+    background: linear-gradient(135deg, #f8b5c1, #b19cd9);
+    @apply rounded-full;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #f8b5c1, #dda0dd);
   }
   
   /* Smooth focus rings */
@@ -70,6 +83,7 @@
   }
   
   *:focus-visible {
-    @apply ring-2 ring-purple-500 ring-offset-2 dark:ring-offset-gray-800;
+    @apply ring-2 ring-offset-2 dark:ring-offset-gray-800;
+    ring-color: #b19cd9;
   }
 }

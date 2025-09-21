@@ -68,7 +68,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ darkMode }) => {
           <motion.h1
             className={`text-6xl md:text-7xl font-bold mb-6 ${
               darkMode ? 'text-white' : 'text-gray-800'
-            } font-['Baloo_2']`}
+            } font-display`}
             initial={{ opacity: 0, y: 50 }}
             animate={{ 
               opacity: 1,
@@ -81,26 +81,26 @@ export const LandingPage: React.FC<LandingPageProps> = ({ darkMode }) => {
               backgroundPosition: { duration: 3, repeat: Infinity }
             }}
             style={{
-              background: 'linear-gradient(90deg, #ec4899, #8b5cf6, #3b82f6, #ec4899)',
+              background: 'linear-gradient(135deg, #f8b5c1, #a8d5ba, #87ceeb, #b19cd9, #dda0dd, #f8b5c1)',
               backgroundSize: '200% 100%',
               backgroundClip: 'text',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
             }}
           >
-            Turn Stress into Play 🎶😂🎬
+            Transform Stress into Serenity ✨
           </motion.h1>
           
           <motion.p
             className={`text-xl md:text-2xl mb-8 ${
               darkMode ? 'text-gray-300' : 'text-gray-600'
-            } max-w-2xl mx-auto font-['Comic_Neue'] leading-relaxed`}
+            } max-w-2xl mx-auto font-body leading-relaxed`}
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.8 }}
           >
-            Entertainment that adapts to your mood. Four games designed to help you unwind, 
-            express yourself, and find your perfect vibe.
+            Mindful entertainment that adapts to your emotional state. Four thoughtfully designed experiences 
+            to help you unwind, express yourself, and discover inner balance.
           </motion.p>
           
           <motion.div

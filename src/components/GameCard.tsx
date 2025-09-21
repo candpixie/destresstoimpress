@@ -49,7 +49,7 @@ export const GameCard: React.FC<GameCardProps> = ({ game, darkMode, onClick }) =
         <motion.h3
           className={`text-2xl font-bold mb-3 ${
           darkMode ? 'text-white' : 'text-gray-800'
-        } font-['Baloo_2']`}
+        } font-display`}
           initial={{ opacity: 0, x: -20 }}
           whileInView={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.2 }}
@@ -61,7 +61,7 @@ export const GameCard: React.FC<GameCardProps> = ({ game, darkMode, onClick }) =
         <motion.p
           className={`text-base mb-6 ${
           darkMode ? 'text-gray-300' : 'text-gray-600'
-        } leading-relaxed font-['Comic_Neue']`}
+        } leading-relaxed font-body`}
           initial={{ opacity: 0, x: -20 }}
           whileInView={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.3 }}
@@ -71,7 +71,7 @@ export const GameCard: React.FC<GameCardProps> = ({ game, darkMode, onClick }) =
         
         {/* Play button */}
         <motion.button
-          className="px-8 py-3 bg-gradient-to-r from-pink-500 to-purple-500 text-white rounded-full font-semibold shadow-lg hover:shadow-xl transition-all duration-200 font-['Baloo_2']"
+          className="px-8 py-3 bg-brand-gradient text-white rounded-full font-semibold shadow-lg hover:shadow-xl transition-all duration-200 font-display"
           whileHover={{ scale: 1.05, boxShadow: "0 10px 30px -10px rgba(236, 72, 153, 0.5)" }}
           whileTap={{ scale: 0.95 }}
           initial={{ opacity: 0, y: 20 }}

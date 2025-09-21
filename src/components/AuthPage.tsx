@@ -78,7 +78,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ darkMode }) => {
           <motion.h2 
             className={`text-3xl font-bold mb-2 ${
             darkMode ? 'text-white' : 'text-gray-800'
-          } font-['Baloo_2']`}
+          } font-display`}
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3, duration: 0.5 }}>
@@ -87,7 +87,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ darkMode }) => {
           <motion.p 
             className={`${
             darkMode ? 'text-gray-300' : 'text-gray-600'
-          } font-['Comic_Neue']`}
+          } font-body`}
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.4, duration: 0.5 }}>
@@ -109,7 +109,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ darkMode }) => {
           }`} size={16} />
           <p className={`text-sm ${
             darkMode ? 'text-blue-300' : 'text-blue-700'
-          } font-['Comic_Neue']`}>
+          } font-body`}>
             Your account is safe and encrypted. We don't share or store personal data.
           </p>
         </motion.div>
@@ -208,7 +208,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ darkMode }) => {
           <motion.button
             type="submit"
             disabled={loading}
-            className={`w-full py-3 px-4 rounded-xl font-semibold text-white bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl font-['Baloo_2']`}
+            className={`w-full py-3 px-4 rounded-xl font-semibold text-white bg-brand-gradient hover:shadow-xl focus:ring-2 focus:ring-brand-lavender focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg font-display`}
             whileHover={{ scale: loading ? 1 : 1.02, boxShadow: "0 10px 30px -10px rgba(236, 72, 153, 0.5)" }}
             whileTap={{ scale: loading ? 1 : 0.98 }}
             initial={{ opacity: 0, y: 20 }}
@@ -226,14 +226,14 @@ export const AuthPage: React.FC<AuthPageProps> = ({ darkMode }) => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1.0, duration: 0.5 }}
         >
-          <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'} font-['Comic_Neue']`}>
+          <p className={`${darkMode ? 'text-gray-300' : 'text-gray-600'} font-body`}>
             {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
             <motion.button
               onClick={() => {
                 setIsSignUp(!isSignUp);
                 setError('');
               }}
-              className="text-purple-500 hover:text-purple-600 font-semibold transition-colors duration-200"
+              className="text-brand-lavender hover:text-brand-plum font-semibold transition-colors duration-200"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >

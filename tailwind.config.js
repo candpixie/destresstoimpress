@@ -5,8 +5,17 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        'comic': ['Comic Neue', 'cursive'],
-        'baloo': ['Baloo 2', 'cursive'],
+        'display': ['Playfair Display', 'serif'],
+        'body': ['Crimson Text', 'serif'],
+      },
+      colors: {
+        brand: {
+          rose: '#f8b5c1',
+          sage: '#a8d5ba', 
+          sky: '#87ceeb',
+          lavender: '#b19cd9',
+          plum: '#dda0dd',
+        }
       },
       animation: {
         'bounce-slow': 'bounce 2s infinite',
