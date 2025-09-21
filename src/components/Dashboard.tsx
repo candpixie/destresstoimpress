@@ -66,6 +66,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ darkMode }) => {
   const [useEmotiBit, setUseEmotiBit] = useState(false);
   const [loading, setLoading] = useState(true);
   const [recommendedGame, setRecommendedGame] = useState<GameRecommendation | null>(null);
+  const [pythonServiceActive, setPythonServiceActive] = useState(false);
 
   // Simulate EmotiBit connection attempt
   useEffect(() => {
@@ -98,11 +99,22 @@ export const Dashboard: React.FC<DashboardProps> = ({ darkMode }) => {
   useEffect(() => {
     const fetchBiometricData = async () => {
       try {
-        const response = await fetch('/api/emotibit', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ useEmotiBit: useEmotiBit && isConnected })
-        });
+        // Try Python service first
+        let response = await fetch('http://localhost:5000/api/emotibit');
+        let usingPythonService = false;
+        
+        if (response.ok) {
+          usingPythonService = true;
+          setPythonServiceActive(true);
+        } else {
+          // Fallback to built-in service
+          response = await fetch('/api/emotibit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ useEmotiBit: useEmotiBit && isConnected })
+          });
+          setPythonServiceActive(false);
+        }
         
         if (response.ok) {
           const data = await response.json();
@@ -117,6 +129,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ darkMode }) => {
         // Generate fallback data
         const fallbackData = generateSimulatedData();
         setBiometricData(fallbackData);
+        setPythonServiceActive(false);
         setRecommendedGame(getRecommendedGame(fallbackData.score));
       }
     };
@@ -235,6 +248,20 @@ export const Dashboard: React.FC<DashboardProps> = ({ darkMode }) => {
 
           {/* Connection Status & Toggle */}
           <div className="flex items-center space-x-4">
+            {/* Python Service Status */}
+            <div className={`flex items-center space-x-2 px-4 py-2 rounded-full ${
+              darkMode ? 'bg-gray-800' : 'bg-white'
+            } shadow-lg`}>
+              <div className={`w-2 h-2 rounded-full ${
+                pythonServiceActive ? 'bg-green-500 animate-pulse' : 'bg-gray-400'
+              }`} />
+              <span className={`text-sm font-medium ${
+                darkMode ? 'text-white' : 'text-gray-800'
+              }`}>
+                {pythonServiceActive ? 'Python ML Service' : 'Built-in Service'}
+              </span>
+            </div>
+            
             <div className={`flex items-center space-x-2 px-4 py-2 rounded-full ${
               darkMode ? 'bg-gray-800' : 'bg-white'
             } shadow-lg`}>
@@ -420,7 +447,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ darkMode }) => {
                 <div className={`text-center text-sm ${
                   darkMode ? 'text-gray-400' : 'text-gray-500'
                 } font-['Comic_Neue']`}>
-                  {useEmotiBit && isConnected ? (
+                  {pythonServiceActive ? (
+                    <span className="flex items-center justify-center space-x-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                      <span>Python ML Service Active</span>
+                    </span>
+                  ) : useEmotiBit && isConnected ? (
                     <span className="flex items-center justify-center space-x-2">
                       <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
                       <span>Live EmotiBit Data</span>
@@ -434,6 +466,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ darkMode }) => {
                   <p className="mt-1">
                     Last updated: {new Date(biometricData.timestamp).toLocaleTimeString()}
                   </p>
+                  {pythonServiceActive && (
+                    <p className="mt-1 text-xs">
+                      🤖 Using trained ML model for stress prediction
+                    </p>
+                  )}
                 </div>
               </div>
             ) : (
