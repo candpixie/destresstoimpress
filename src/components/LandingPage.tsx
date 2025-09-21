@@ -19,10 +19,10 @@ const games: GameCardType[] = [
   },
   {
     id: '2',
-    title: 'Fit Check',
+    title: 'FitCheck',
     icon: '👗',
     tagline: 'Express yourself through fashion. Mix, match, and create your perfect look.',
-    path: '/fit-check',
+    path: '/fitcheck',
     color: '#F59E0B'
   },
   {

@@ -666,7 +666,7 @@ export const FitCheck: React.FC<FitCheckProps> = ({ darkMode }) => {
               <h1 className={`text-4xl font-bold ${
                 darkMode ? 'text-white' : 'text-gray-800'
               } font-['Baloo_2'] flex items-center`}>
-                3D Fashion Store 🐨
+                FitCheck 🐨
               </h1>
               <p className={`text-lg ${
                 darkMode ? 'text-gray-300' : 'text-gray-600'

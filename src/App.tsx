@@ -130,11 +130,11 @@ function App() {
               } 
             />
             <Route 
-              path="/fit-check" 
+              path="/fitcheck" 
               element={
                 <ProtectedRoute>
                   <motion.div
-                    key="fit-check"
+                    key="fitcheck"
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -20 }}
