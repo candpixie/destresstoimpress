@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Home, Activity, Heart, Zap, Wifi, WifiOff, ToggleLeft, ToggleRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { emotiBitService } from '../api/emotibit';
 
 interface DashboardProps {
   darkMode: boolean;
@@ -98,46 +99,42 @@ export const Dashboard: React.FC<DashboardProps> = ({ darkMode }) => {
   // Fetch biometric data
   useEffect(() => {
     const fetchBiometricData = async () => {
+      let data: BiometricData;
+      let game: GameRecommendation;
+      
       try {
-        let response;
         let usingPythonService = false;
         
         // Try Python service first (real EmotiBit integration)
         try {
-          response = await fetch('http://localhost:5000/api/emotibit');
+          const response = await fetch('http://localhost:5000/api/emotibit');
           if (response.ok) {
             usingPythonService = true;
             setPythonServiceActive(true);
+            data = await response.json();
           } else {
             throw new Error('Python service not available');
           }
         } catch (pythonError) {
           console.log('Python service not available, using built-in service');
-          // Fallback to built-in service
-          response = await fetch('/api/emotibit', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ useEmotiBit: useEmotiBit && isConnected })
-          });
+          // Use built-in service directly
+          data = await emotiBitService.getReading(useEmotiBit && isConnected);
           setPythonServiceActive(false);
         }
         
-        if (response.ok) {
-          const data = await response.json();
-          setBiometricData(data);
-          
-          // Determine recommended game based on stress score
-          const game = getRecommendedGame(data.score);
-          setRecommendedGame(game);
-        // Use built-in service directly
-        const { emotiBitService } = await import('../api/emotibit');
-        const data = await emotiBitService.getReading(useEmotiBit && isConnected);
         setBiometricData(data);
-        setPythonServiceActive(false);
-        const game = getRecommendedGame(data.score);
+        
+        // Determine recommended game based on stress score
+        game = getRecommendedGame(data.score);
         setRecommendedGame(game);
-        return;
-        setRecommendedGame(getRecommendedGame(fallbackData.score));
+      } catch (error) {
+        console.error('Failed to fetch biometric data:', error);
+        // Use fallback simulated data
+        data = generateSimulatedData();
+        setBiometricData(data);
+        game = getRecommendedGame(data.score);
+        setRecommendedGame(game);
+        setPythonServiceActive(false);
       }
     };
 
