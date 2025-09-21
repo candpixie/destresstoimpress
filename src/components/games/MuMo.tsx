@@ -20,6 +20,23 @@ interface CerebrasResponse {
   };
 }
 
+interface AIGeneratedContent {
+  music: {
+    title: string;
+    description: string;
+    genre: string;
+    mood_match: string;
+    audio_description: string;
+  }[];
+  movies: {
+    title: string;
+    description: string;
+    genre: string;
+    scene_description: string;
+    visual_style: string;
+  }[];
+}
+
 const moodIcons = {
   Happy: { icon: Smile, color: 'text-yellow-500', bg: 'bg-yellow-500' },
   Sad: { icon: Heart, color: 'text-blue-500', bg: 'bg-blue-500' },
@@ -35,6 +52,8 @@ export const MuMo: React.FC<MuMoProps> = ({ darkMode }) => {
   const [loading, setLoading] = useState(false);
   const [aiInsights, setAiInsights] = useState<string | null>(null);
   const [confidence, setConfidence] = useState<number | null>(null);
+  const [aiContent, setAiContent] = useState<AIGeneratedContent | null>(null);
+  const [generatingContent, setGeneratingContent] = useState(false);
 
   const detectMoodWithCerebras = async (text: string): Promise<CerebrasResponse | null> => {
     const CEREBRAS_API_KEY = import.meta.env.VITE_CEREBRAS_API_KEY;
@@ -104,6 +123,90 @@ export const MuMo: React.FC<MuMoProps> = ({ darkMode }) => {
     }
   };
 
+  const generateAIContent = async (mood: string, userText: string): Promise<AIGeneratedContent | null> => {
+    const CEREBRAS_API_KEY = import.meta.env.VITE_CEREBRAS_API_KEY;
+    
+    if (!CEREBRAS_API_KEY) {
+      console.warn('Cerebras API key not found for content generation');
+      return null;
+    }
+
+    try {
+      const response = await fetch('https://api.cerebras.ai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${CEREBRAS_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'llama3.1-8b',
+          messages: [
+            {
+              role: 'system',
+              content: `You are a creative AI that generates personalized music and movie content based on user mood. 
+              
+              Create 2 unique music tracks and 2 unique movie scenes that perfectly match the detected mood: "${mood}".
+              
+              User context: "${userText}"
+              
+              Respond with a JSON object:
+              {
+                "music": [
+                  {
+                    "title": "Creative track name",
+                    "description": "What this music represents and why it fits the mood",
+                    "genre": "Musical genre",
+                    "mood_match": "How it matches the user's mood",
+                    "audio_description": "Detailed description of how this would sound (instruments, tempo, style)"
+                  }
+                ],
+                "movies": [
+                  {
+                    "title": "Creative scene/short film name",
+                    "description": "What this scene is about and its emotional impact",
+                    "genre": "Film genre",
+                    "scene_description": "Detailed visual description of the scene",
+                    "visual_style": "Cinematography and visual style description"
+                  }
+                ]
+              }
+              
+              Make content creative, personalized, and emotionally resonant. Each item should be unique and specifically crafted for this user's mood.`
+            },
+            {
+              role: 'user',
+              content: `Generate personalized content for mood: ${mood}. User said: "${userText}"`
+            }
+          ],
+          temperature: 0.8,
+          max_tokens: 1500
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Cerebras API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const content = data.choices[0]?.message?.content;
+      
+      if (!content) {
+        throw new Error('No content in Cerebras response');
+      }
+
+      // Parse JSON response
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error('No JSON found in response');
+      }
+
+      return JSON.parse(jsonMatch[0]);
+    } catch (error) {
+      console.error('AI Content Generation error:', error);
+      return null;
+    }
+  };
+
   const fallbackMoodDetection = (text: string): { mood: string; reasoning: string } => {
     const input = text.toLowerCase();
     
@@ -122,8 +225,10 @@ export const MuMo: React.FC<MuMoProps> = ({ darkMode }) => {
     if (!moodInput.trim()) return;
 
     setLoading(true);
+    setGeneratingContent(false);
     setAiInsights(null);
     setConfidence(null);
+    setAiContent(null);
     
     try {
       // Try Cerebras API first
@@ -147,6 +252,14 @@ export const MuMo: React.FC<MuMoProps> = ({ darkMode }) => {
 
       setDetectedMood(mood);
       setRecommendations(fallbackMoodContent[mood]);
+
+      // Generate AI content after mood detection
+      setGeneratingContent(true);
+      const generatedContent = await generateAIContent(mood, moodInput);
+      if (generatedContent) {
+        setAiContent(generatedContent);
+      }
+      setGeneratingContent(false);
     } catch (error) {
       console.error('Mood detection error:', error);
       // Fallback to simple detection
@@ -154,6 +267,7 @@ export const MuMo: React.FC<MuMoProps> = ({ darkMode }) => {
       setDetectedMood(fallbackResult.mood);
       setRecommendations(fallbackMoodContent[fallbackResult.mood]);
       setAiInsights(fallbackResult.reasoning);
+      setGeneratingContent(false);
     } finally {
       setLoading(false);
     }
@@ -165,6 +279,8 @@ export const MuMo: React.FC<MuMoProps> = ({ darkMode }) => {
     setRecommendations(null);
     setAiInsights(null);
     setConfidence(null);
+    setAiContent(null);
+    setGeneratingContent(false);
   };
 
   const MoodIcon = detectedMood ? moodIcons[detectedMood as keyof typeof moodIcons]?.icon : Music;
@@ -339,8 +455,184 @@ export const MuMo: React.FC<MuMoProps> = ({ darkMode }) => {
               </motion.button>
             </div>
 
+            {/* AI Generated Content */}
+            {(aiContent || generatingContent) && (
+              <motion.div
+                className={`p-6 rounded-2xl ${
+                  darkMode ? 'bg-gray-800/50 border-gray-700' : 'bg-white/50 border-gray-200'
+                } border backdrop-blur-sm mb-8`}
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6 }}
+              >
+                <div className="flex items-center space-x-3 mb-6">
+                  <div className="text-2xl">🤖</div>
+                  <h3 className={`text-2xl font-bold ${
+                    darkMode ? 'text-white' : 'text-gray-800'
+                  } font-['Baloo_2']`}>
+                    AI-Generated Content Just for You
+                  </h3>
+                </div>
+
+                {generatingContent ? (
+                  <div className="text-center py-8">
+                    <motion.div
+                      className="text-4xl mb-4"
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+                    >
+                      🎨
+                    </motion.div>
+                    <p className={`text-lg ${
+                      darkMode ? 'text-gray-300' : 'text-gray-600'
+                    } font-['Comic_Neue']`}>
+                      AI is creating personalized content for your mood...
+                    </p>
+                  </div>
+                ) : aiContent && (
+                  <div className="space-y-8">
+                    {/* AI Music */}
+                    <div>
+                      <div className="flex items-center space-x-2 mb-4">
+                        <div className="text-2xl">🎵</div>
+                        <h4 className={`text-xl font-bold ${
+                          darkMode ? 'text-white' : 'text-gray-800'
+                        } font-['Baloo_2']`}>
+                          AI-Composed Music
+                        </h4>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {aiContent.music.map((track, index) => (
+                          <motion.div
+                            key={index}
+                            className={`p-6 rounded-2xl ${
+                              darkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'
+                            } border shadow-lg`}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: index * 0.1 }}
+                          >
+                            <div className="flex items-start space-x-3 mb-3">
+                              <div className="text-2xl">🎼</div>
+                              <div>
+                                <h5 className={`text-lg font-bold ${
+                                  darkMode ? 'text-white' : 'text-gray-800'
+                                } font-['Baloo_2']`}>
+                                  {track.title}
+                                </h5>
+                                <span className={`text-sm px-2 py-1 rounded-full ${
+                                  darkMode ? 'bg-purple-900 text-purple-300' : 'bg-purple-100 text-purple-700'
+                                }`}>
+                                  {track.genre}
+                                </span>
+                              </div>
+                            </div>
+                            <p className={`text-sm mb-3 ${
+                              darkMode ? 'text-gray-300' : 'text-gray-600'
+                            } font-['Comic_Neue']`}>
+                              {track.description}
+                            </p>
+                            <div className={`text-xs p-3 rounded-lg ${
+                              darkMode ? 'bg-gray-800' : 'bg-gray-50'
+                            } mb-3`}>
+                              <p className={`font-semibold mb-1 ${
+                                darkMode ? 'text-gray-300' : 'text-gray-700'
+                              }`}>
+                                🎧 Audio Description:
+                              </p>
+                              <p className={`${
+                                darkMode ? 'text-gray-400' : 'text-gray-600'
+                              } font-['Comic_Neue']`}>
+                                {track.audio_description}
+                              </p>
+                            </div>
+                            <p className={`text-xs italic ${
+                              darkMode ? 'text-gray-400' : 'text-gray-500'
+                            } font-['Comic_Neue']`}>
+                              💝 {track.mood_match}
+                            </p>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* AI Movies */}
+                    <div>
+                      <div className="flex items-center space-x-2 mb-4">
+                        <div className="text-2xl">🎬</div>
+                        <h4 className={`text-xl font-bold ${
+                          darkMode ? 'text-white' : 'text-gray-800'
+                        } font-['Baloo_2']`}>
+                          AI-Created Movie Scenes
+                        </h4>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {aiContent.movies.map((movie, index) => (
+                          <motion.div
+                            key={index}
+                            className={`p-6 rounded-2xl ${
+                              darkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-300'
+                            } border shadow-lg`}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: (index + 2) * 0.1 }}
+                          >
+                            <div className="flex items-start space-x-3 mb-3">
+                              <div className="text-2xl">🎭</div>
+                              <div>
+                                <h5 className={`text-lg font-bold ${
+                                  darkMode ? 'text-white' : 'text-gray-800'
+                                } font-['Baloo_2']`}>
+                                  {movie.title}
+                                </h5>
+                                <span className={`text-sm px-2 py-1 rounded-full ${
+                                  darkMode ? 'bg-red-900 text-red-300' : 'bg-red-100 text-red-700'
+                                }`}>
+                                  {movie.genre}
+                                </span>
+                              </div>
+                            </div>
+                            <p className={`text-sm mb-3 ${
+                              darkMode ? 'text-gray-300' : 'text-gray-600'
+                            } font-['Comic_Neue']`}>
+                              {movie.description}
+                            </p>
+                            <div className={`text-xs p-3 rounded-lg ${
+                              darkMode ? 'bg-gray-800' : 'bg-gray-50'
+                            } mb-3`}>
+                              <p className={`font-semibold mb-1 ${
+                                darkMode ? 'text-gray-300' : 'text-gray-700'
+                              }`}>
+                                🎥 Scene Description:
+                              </p>
+                              <p className={`${
+                                darkMode ? 'text-gray-400' : 'text-gray-600'
+                              } font-['Comic_Neue'] mb-2`}>
+                                {movie.scene_description}
+                              </p>
+                              <p className={`font-semibold mb-1 ${
+                                darkMode ? 'text-gray-300' : 'text-gray-700'
+                              }`}>
+                                🎨 Visual Style:
+                              </p>
+                              <p className={`${
+                                darkMode ? 'text-gray-400' : 'text-gray-600'
+                              } font-['Comic_Neue']`}>
+                                {movie.visual_style}
+                              </p>
+                            </div>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </motion.div>
+            )}
+
             {/* Music Playlists */}
-            <div>
+            {!aiContent && (
+              <div>
               <div className="flex items-center space-x-3 mb-6">
                 <Music className="text-purple-500" size={32} />
                 <h3 className={`text-2xl font-bold ${
@@ -390,9 +682,11 @@ export const MuMo: React.FC<MuMoProps> = ({ darkMode }) => {
                 ))}
               </div>
             </div>
+            )}
 
             {/* Movie Recommendations */}
-            <div>
+            {!aiContent && (
+              <div>
               <div className="flex items-center space-x-3 mb-6">
                 <Film className="text-red-500" size={32} />
                 <h3 className={`text-2xl font-bold ${
@@ -442,6 +736,7 @@ export const MuMo: React.FC<MuMoProps> = ({ darkMode }) => {
                 ))}
               </div>
             </div>
+            )}
           </motion.div>
         )}
 
