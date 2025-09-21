@@ -5,6 +5,7 @@ import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { LandingPage } from './components/LandingPage';
 import { AuthPage } from './components/AuthPage';
+import { Dashboard } from './components/Dashboard';
 import { FlappyBreath } from './components/games/FlappyBreath';
 import { FitCheck } from './components/games/FitCheck';
 import { MeMeMeMer } from './components/games/MeMeMeMer';
@@ -95,6 +96,22 @@ function App() {
                     transition={{ duration: 0.3 }}
                   >
                     <LandingPage darkMode={darkMode} />
+                  </motion.div>
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/dashboard" 
+              element={
+                <ProtectedRoute>
+                  <motion.div
+                    key="dashboard"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <Dashboard darkMode={darkMode} />
                   </motion.div>
                 </ProtectedRoute>
               } 

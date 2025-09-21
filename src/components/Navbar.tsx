@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Gamepad2, Sun, Moon, LogOut, User } from 'lucide-react';
+import { Gamepad2, Sun, Moon, LogOut, User, BarChart3 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 
 interface NavbarProps {
   darkMode: boolean;
@@ -11,6 +12,7 @@ interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = ({ darkMode, toggleDarkMode }) => {
   const { user, signOut } = useAuth();
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const navigate = useNavigate();
 
   const handleSignOut = async () => {
     await signOut();
@@ -33,8 +35,10 @@ export const Navbar: React.FC<NavbarProps> = ({ darkMode, toggleDarkMode }) => {
           {/* Logo */}
           <motion.div 
             className="flex items-center space-x-2"
+            onClick={() => navigate('/')}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
+            style={{ cursor: 'pointer' }}
           >
             <Gamepad2 className="text-3xl text-pink-500" />
             <span className={`text-2xl font-bold bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 bg-clip-text text-transparent font-['Baloo_2']`}>
@@ -44,6 +48,21 @@ export const Navbar: React.FC<NavbarProps> = ({ darkMode, toggleDarkMode }) => {
 
           {/* Right side controls */}
           <div className="flex items-center space-x-4">
+            {/* Dashboard Link */}
+            {user && (
+              <motion.button
+                onClick={() => navigate('/dashboard')}
+                className={`p-2 rounded-full ${
+                  darkMode ? 'bg-gray-700 text-blue-400' : 'bg-gray-100 text-blue-600'
+                } hover:scale-110 transition-all duration-200`}
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                title="Mood Dashboard"
+              >
+                <BarChart3 size={20} />
+              </motion.button>
+            )}
+
             {/* Theme toggle */}
             <motion.button
               onClick={toggleDarkMode}

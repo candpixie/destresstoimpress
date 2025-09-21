@@ -111,7 +111,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ darkMode }) => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6, duration: 0.8 }}
           >
-            {['🧘 Mindful Gaming', '🎨 Creative Expression', '😄 Mood Boosting', '🎵 Personalized Content'].map((feature, index) => (
+            {['🧘 Mindful Gaming', '🎨 Creative Expression', '😄 Mood Boosting', '📊 Biometric Tracking'].map((feature, index) => (
               <motion.span
                 key={feature}
                 className={`px-4 py-2 rounded-full ${
@@ -174,7 +174,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ darkMode }) => {
           } backdrop-blur-sm border ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
             <span className="text-2xl">✨</span>
             <span className="font-['Comic_Neue']">
-              AI-powered mood detection • Personalized recommendations • Safe & secure
+              AI-powered mood detection • EmotiBit biometric tracking • Personalized recommendations
             </span>
           </div>
         </motion.div>
