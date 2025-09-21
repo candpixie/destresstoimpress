@@ -9,6 +9,17 @@ interface MuMoProps {
   darkMode: boolean;
 }
 
+interface CerebrasResponse {
+  mood: string;
+  confidence: number;
+  reasoning: string;
+  recommendations?: {
+    music_genres?: string[];
+    movie_genres?: string[];
+    activities?: string[];
+  };
+}
+
 const moodIcons = {
   Happy: { icon: Smile, color: 'text-yellow-500', bg: 'bg-yellow-500' },
   Sad: { icon: Heart, color: 'text-blue-500', bg: 'bg-blue-500' },
@@ -22,37 +33,138 @@ export const MuMo: React.FC<MuMoProps> = ({ darkMode }) => {
   const [detectedMood, setDetectedMood] = useState<string | null>(null);
   const [recommendations, setRecommendations] = useState<MoodContent | null>(null);
   const [loading, setLoading] = useState(false);
+  const [aiInsights, setAiInsights] = useState<string | null>(null);
+  const [confidence, setConfidence] = useState<number | null>(null);
+
+  const detectMoodWithCerebras = async (text: string): Promise<CerebrasResponse | null> => {
+    const CEREBRAS_API_KEY = import.meta.env.VITE_CEREBRAS_API_KEY;
+    
+    if (!CEREBRAS_API_KEY) {
+      console.warn('Cerebras API key not found, using fallback mood detection');
+      return null;
+    }
+
+    try {
+      const response = await fetch('https://api.cerebras.ai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${CEREBRAS_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'llama3.1-8b',
+          messages: [
+            {
+              role: 'system',
+              content: `You are an empathetic mood detection AI. Analyze the user's text and respond with a JSON object containing:
+              {
+                "mood": "Happy" | "Sad" | "Stressed" | "Chill",
+                "confidence": 0.0-1.0,
+                "reasoning": "brief explanation of why you detected this mood",
+                "recommendations": {
+                  "music_genres": ["genre1", "genre2"],
+                  "movie_genres": ["genre1", "genre2"],
+                  "activities": ["activity1", "activity2"]
+                }
+              }
+              
+              Be supportive and understanding. Focus on the emotional tone, keywords, and context.`
+            },
+            {
+              role: 'user',
+              content: text
+            }
+          ],
+          temperature: 0.7,
+          max_tokens: 500
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Cerebras API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const content = data.choices[0]?.message?.content;
+      
+      if (!content) {
+        throw new Error('No content in Cerebras response');
+      }
+
+      // Parse JSON response
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error('No JSON found in response');
+      }
+
+      return JSON.parse(jsonMatch[0]);
+    } catch (error) {
+      console.error('Cerebras API error:', error);
+      return null;
+    }
+  };
+
+  const fallbackMoodDetection = (text: string): { mood: string; reasoning: string } => {
+    const input = text.toLowerCase();
+    
+    if (input.includes('happy') || input.includes('great') || input.includes('excited') || input.includes('joy') || input.includes('amazing') || input.includes('wonderful')) {
+      return { mood: 'Happy', reasoning: 'Detected positive emotions and upbeat language' };
+    } else if (input.includes('sad') || input.includes('down') || input.includes('depressed') || input.includes('upset') || input.includes('crying') || input.includes('lonely')) {
+      return { mood: 'Sad', reasoning: 'Detected sadness and emotional distress indicators' };
+    } else if (input.includes('stressed') || input.includes('anxious') || input.includes('worried') || input.includes('overwhelmed') || input.includes('pressure') || input.includes('deadline')) {
+      return { mood: 'Stressed', reasoning: 'Detected stress and anxiety-related keywords' };
+    } else {
+      return { mood: 'Chill', reasoning: 'Neutral or calm emotional tone detected' };
+    }
+  };
 
   const detectMood = async () => {
     if (!moodInput.trim()) return;
 
     setLoading(true);
+    setAiInsights(null);
+    setConfidence(null);
     
-    // Simulate mood detection with simple keyword matching
-    setTimeout(() => {
-      let mood = 'Chill'; // default
-      const input = moodInput.toLowerCase();
+    try {
+      // Try Cerebras API first
+      const cerebrasResult = await detectMoodWithCerebras(moodInput);
       
-      if (input.includes('happy') || input.includes('great') || input.includes('excited') || input.includes('joy')) {
-        mood = 'Happy';
-      } else if (input.includes('sad') || input.includes('down') || input.includes('depressed') || input.includes('upset')) {
-        mood = 'Sad';
-      } else if (input.includes('stressed') || input.includes('anxious') || input.includes('worried') || input.includes('overwhelmed')) {
-        mood = 'Stressed';
-      } else if (input.includes('chill') || input.includes('relaxed') || input.includes('calm') || input.includes('peaceful')) {
-        mood = 'Chill';
+      let mood: string;
+      let reasoning: string;
+      
+      if (cerebrasResult) {
+        mood = cerebrasResult.mood;
+        reasoning = cerebrasResult.reasoning;
+        setConfidence(cerebrasResult.confidence);
+        setAiInsights(reasoning);
+      } else {
+        // Fallback to simple keyword matching
+        const fallbackResult = fallbackMoodDetection(moodInput);
+        mood = fallbackResult.mood;
+        reasoning = fallbackResult.reasoning;
+        setAiInsights(reasoning);
       }
 
       setDetectedMood(mood);
       setRecommendations(fallbackMoodContent[mood]);
+    } catch (error) {
+      console.error('Mood detection error:', error);
+      // Fallback to simple detection
+      const fallbackResult = fallbackMoodDetection(moodInput);
+      setDetectedMood(fallbackResult.mood);
+      setRecommendations(fallbackMoodContent[fallbackResult.mood]);
+      setAiInsights(fallbackResult.reasoning);
+    } finally {
       setLoading(false);
-    }, 1500);
+    }
   };
 
   const resetMood = () => {
     setMoodInput('');
     setDetectedMood(null);
     setRecommendations(null);
+    setAiInsights(null);
+    setConfidence(null);
   };
 
   const MoodIcon = detectedMood ? moodIcons[detectedMood as keyof typeof moodIcons]?.icon : Music;
@@ -106,6 +218,13 @@ export const MuMo: React.FC<MuMoProps> = ({ darkMode }) => {
                 <span className="text-xl font-bold font-['Baloo_2']">
                   Feeling {detectedMood}
                 </span>
+                {confidence && (
+                  <span className={`text-sm ${
+                    darkMode ? 'text-gray-400' : 'text-gray-600'
+                  }`}>
+                    ({Math.round(confidence * 100)}% confident)
+                  </span>
+                )}
               </div>
             </div>
           )}
@@ -179,7 +298,7 @@ export const MuMo: React.FC<MuMoProps> = ({ darkMode }) => {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                 >
-                  Analyzing your mood... ✨
+                  🤖 AI is analyzing your mood... ✨
                 </motion.p>
               )}
             </div>
