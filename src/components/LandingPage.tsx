@@ -70,8 +70,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ darkMode }) => {
               darkMode ? 'text-white' : 'text-gray-800'
             } font-['Baloo_2']`}
             initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
             animate={{ 
               opacity: 1,
               y: 0,

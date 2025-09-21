@@ -13,9 +13,6 @@ export default defineConfig({
         configure: (proxy, options) => {
           proxy.on('proxyReq', (proxyReq, req, res) => {
             if (req.url?.startsWith('/api/emotibit')) {
-              // Handle EmotiBit API requests
-              const emotiBitService = require('./src/api/emotibit.ts').default;
-              
               let body = '';
               req.on('data', chunk => {
                 body += chunk.toString();
@@ -23,6 +20,9 @@ export default defineConfig({
               
               req.on('end', async () => {
                 try {
+                  // Handle EmotiBit API requests using dynamic import
+                  const { default: emotiBitService } = await import('./src/api/emotibit.ts');
+                  
                   const requestData = body ? JSON.parse(body) : {};
                   const useEmotiBit = requestData.useEmotiBit || false;
                   
