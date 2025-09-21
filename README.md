@@ -59,7 +59,7 @@ Entertainment is everywhere, but it’s not designed to connect to how we actual
 
 By syncing entertainment with stress signals, we make coping interactive, playful, and adaptive.
 
-👩‍💻 Team
+👩‍💻 Team (WOMEN IN STEM!!!)
 - Candy Xie
 - Lara De
 - Emily New
