@@ -45,6 +45,7 @@ export const Navbar: React.FC<NavbarProps> = ({ darkMode, toggleDarkMode }) => {
             <span className={`text-2xl font-bold text-gradient font-display`}>
               Destress2Impress
             </span>
+            </span>
           </motion.div>
 
           {/* Right side controls */}
