@@ -32,8 +32,8 @@ class EmotiBitService {
     this.config = {
       sampleRate: 25, // Hz
       bufferSize: 1000,
-      websocketUrl: 'ws://localhost:8080/emotibit',
-      httpEndpoint: 'http://localhost:8080/api/emotibit',
+      websocketUrl: null, // Disable WebSocket by default
+      httpEndpoint: '/api/emotibit', // Use Vite proxy
       ...config
     };
     
@@ -89,6 +89,11 @@ class EmotiBitService {
   }
 
   private async tryWebSocketConnection(): Promise<boolean> {
+    // Skip WebSocket connection if URL is not configured
+    if (!this.config.websocketUrl) {
+      return false;
+    }
+
     return new Promise((resolve) => {
       try {
         const ws = new WebSocket(this.config.websocketUrl!);
@@ -126,6 +131,11 @@ class EmotiBitService {
   }
 
   private async tryHttpConnection(): Promise<boolean> {
+    // Skip HTTP connection if endpoint is not configured
+    if (!this.config.httpEndpoint) {
+      return false;
+    }
+
     try {
       const response = await fetch(this.config.httpEndpoint!, {
         method: 'GET',
