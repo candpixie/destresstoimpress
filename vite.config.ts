@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import emotiBitService from './src/api/emotibit';
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -20,9 +21,6 @@ export default defineConfig({
               
               req.on('end', async () => {
                 try {
-                  // Handle EmotiBit API requests using dynamic import
-                  const { default: emotiBitService } = await import('./src/api/emotibit.ts');
-                  
                   const requestData = body ? JSON.parse(body) : {};
                   const useEmotiBit = requestData.useEmotiBit || false;
                   
