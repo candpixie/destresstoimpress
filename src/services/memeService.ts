@@ -92,7 +92,7 @@ export const fetchTrendingMemes = async (): Promise<RedditPost[]> => {
     const randomTime = timeFilters[Math.floor(Math.random() * timeFilters.length)];
     
     // Build URL with time filter for 'top' posts
-    const baseUrl = `https://www.reddit.com/r/${randomSubreddit}/${randomSort}.json?limit=25`;
+    const baseUrl = `/reddit-api/r/${randomSubreddit}/${randomSort}.json?limit=25`;
     const url = randomSort === 'top' ? `${baseUrl}&t=${randomTime}` : baseUrl;
     
     const response = await fetch(url, {
@@ -151,7 +151,7 @@ export const fetchTrendingMemes = async (): Promise<RedditPost[]> => {
     try {
       const fallbackSubreddit = MEME_SUBREDDITS[Math.floor(Math.random() * MEME_SUBREDDITS.length)];
       const fallbackResponse = await fetch(
-        `https://www.reddit.com/r/${fallbackSubreddit}/hot.json?limit=10`,
+        `/reddit-api/r/${fallbackSubreddit}/hot.json?limit=10`,
         {
           headers: {
             'User-Agent': 'MeMemeMer/1.0'
