@@ -537,90 +537,198 @@ export const FlappyBreath: React.FC<FlappyBreathProps> = ({ darkMode }) => {
     canvas.height = GAME_HEIGHT;
 
     // Clear canvas
-    ctx.fillStyle = darkMode ? '#1f2937' : '#87CEEB';
+    ctx.fillStyle = darkMode ? '#1a1a2e' : '#87CEEB';
     ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
+    // Add background gradient
+    const gradient = ctx.createLinearGradient(0, 0, 0, GAME_HEIGHT);
+    gradient.addColorStop(0, darkMode ? '#16213e' : '#87CEEB');
+    gradient.addColorStop(1, darkMode ? '#0f3460' : '#4682B4');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+
+    // Add floating clouds
+    ctx.fillStyle = darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.8)';
+    const time = Date.now() * 0.001;
+    for (let i = 0; i < 5; i++) {
+      const x = (time * 20 + i * 150) % (GAME_WIDTH + 100) - 50;
+      const y = 50 + i * 80;
+      drawCloud(ctx, x, y, 0.5 + i * 0.2);
+    }
     // Draw pipes
-    ctx.fillStyle = darkMode ? '#374151' : '#32CD32';
+    ctx.fillStyle = darkMode ? '#2d5a27' : '#228B22';
     gameState.pipes.forEach(pipe => {
+      // Add pipe gradient
+      const pipeGradient = ctx.createLinearGradient(pipe.x, 0, pipe.x + pipe.width, 0);
+      pipeGradient.addColorStop(0, darkMode ? '#2d5a27' : '#32CD32');
+      pipeGradient.addColorStop(0.5, darkMode ? '#1e3a1a' : '#228B22');
+      pipeGradient.addColorStop(1, darkMode ? '#2d5a27' : '#32CD32');
+      ctx.fillStyle = pipeGradient;
+      
       // Top pipe
       ctx.fillRect(pipe.x, 0, pipe.width, pipe.gapY);
+      
       // Bottom pipe
       ctx.fillRect(pipe.x, pipe.gapY + pipe.gapHeight, pipe.width, GAME_HEIGHT - pipe.gapY - pipe.gapHeight);
+      
+      // Add pipe caps
+      ctx.fillStyle = darkMode ? '#1e3a1a' : '#1e7e1e';
+      ctx.fillRect(pipe.x - 5, pipe.gapY - 30, pipe.width + 10, 30);
+      ctx.fillRect(pipe.x - 5, pipe.gapY + pipe.gapHeight, pipe.width + 10, 30);
     });
 
-    // Draw animated bird with breathing effect
+    // Draw 3D-style animated bird
     const bird = gameState.bird;
-    const breathingScale = gameState.breathingForceActive ? 1.2 : 1.0;
+    drawBird3D(ctx, bird, gameState, time);
+    
+  }, [gameState, darkMode]);
+
+  // Helper function to draw clouds
+  const drawCloud = (ctx: CanvasRenderingContext2D, x: number, y: number, scale: number) => {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.scale(scale, scale);
+    
+    ctx.beginPath();
+    ctx.arc(-20, 0, 15, 0, Math.PI * 2);
+    ctx.arc(-5, -5, 20, 0, Math.PI * 2);
+    ctx.arc(10, 0, 18, 0, Math.PI * 2);
+    ctx.arc(25, -2, 15, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.restore();
+  };
+
+  // Enhanced 3D-style bird drawing function
+  const drawBird3D = (ctx: CanvasRenderingContext2D, bird: Bird, gameState: GameState, time: number) => {
+    const breathingScale = gameState.breathingForceActive ? 1.3 : 1.0;
     const birdRadius = bird.radius * breathingScale;
     
     // Save context for bird transformations
     ctx.save();
     ctx.translate(bird.x, bird.y);
     
-    // Apply breathing rotation effect
-    const breathingRotation = gameState.breathingState === 'inhale' ? -0.2 : 
-                             gameState.breathingState === 'exhale' ? 0.2 : 0;
+    // Apply breathing rotation and movement
+    const breathingRotation = gameState.breathingState === 'inhale' ? -0.3 : 
+                             gameState.breathingState === 'exhale' ? 0.3 : 
+                             Math.sin(time * 2) * 0.1; // Idle floating animation
     ctx.rotate(breathingRotation);
     
-    // Bird glow effect based on breathing
+    // Velocity-based tilt
+    const velocityTilt = Math.max(-0.5, Math.min(0.5, bird.velocityY * 0.05));
+    ctx.rotate(velocityTilt);
+    
+    // Bird glow effect
     if (gameState.breathingForceActive) {
       const glowColor = gameState.breathingState === 'inhale' ? '#60A5FA' : '#F87171';
       ctx.shadowColor = glowColor;
-      ctx.shadowBlur = 20;
+      ctx.shadowBlur = 30;
     }
     
-    // Draw bird body
-    const bodyColor = gameState.breathingState === 'inhale' ? '#60A5FA' : 
-                     gameState.breathingState === 'exhale' ? '#F87171' : '#FCD34D';
+    // Dynamic colors based on breathing
+    const bodyColor = gameState.breathingState === 'inhale' ? '#3B82F6' : 
+                     gameState.breathingState === 'exhale' ? '#EF4444' : '#F59E0B';
+    const wingColor = gameState.breathingState === 'inhale' ? '#1D4ED8' : 
+                     gameState.breathingState === 'exhale' ? '#DC2626' : '#D97706';
     
-    // Bird body (main oval)
-    ctx.fillStyle = bodyColor;
+    // Wing flapping animation
+    const wingFlap = gameState.breathingForceActive ? 
+      Math.sin(time * 20) * 0.5 : 
+      Math.sin(time * 8) * 0.2;
+    
+    // Draw bird shadow (3D effect)
+    ctx.save();
+    ctx.translate(5, 5);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+    ctx.scale(1, 0.5);
     ctx.beginPath();
     ctx.ellipse(0, 0, birdRadius * 1.2, birdRadius * 0.8, 0, 0, Math.PI * 2);
     ctx.fill();
+    ctx.restore();
     
-    // Bird head (smaller circle)
-    ctx.fillStyle = bodyColor;
+    // Draw tail feathers (behind body)
+    ctx.fillStyle = wingColor;
+    for (let i = 0; i < 3; i++) {
+      ctx.save();
+      ctx.rotate((i - 1) * 0.2);
+      ctx.beginPath();
+      ctx.ellipse(-birdRadius * 1.2, birdRadius * 0.1 * i, birdRadius * 0.6, birdRadius * 0.3, 0.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+    
+    // Draw wings (animated)
+    ctx.save();
+    ctx.rotate(wingFlap);
+    
+    // Wing gradient for 3D effect
+    const wingGradient = ctx.createRadialGradient(0, 0, 0, 0, 0, birdRadius);
+    wingGradient.addColorStop(0, wingColor);
+    wingGradient.addColorStop(1, bodyColor);
+    ctx.fillStyle = wingGradient;
+    
+    // Left wing
     ctx.beginPath();
-    ctx.ellipse(birdRadius * 0.6, -birdRadius * 0.3, birdRadius * 0.7, birdRadius * 0.7, 0, 0, Math.PI * 2);
+    ctx.ellipse(-birdRadius * 0.3, birdRadius * 0.2, birdRadius * 0.9, birdRadius * 0.5, -0.4, 0, Math.PI * 2);
     ctx.fill();
     
-    // Bird beak
-    ctx.fillStyle = '#FF8C00';
+    // Right wing
     ctx.beginPath();
-    ctx.moveTo(birdRadius * 1.2, -birdRadius * 0.3);
-    ctx.lineTo(birdRadius * 1.6, -birdRadius * 0.2);
+    ctx.ellipse(-birdRadius * 0.3, -birdRadius * 0.2, birdRadius * 0.9, birdRadius * 0.5, 0.4, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.restore();
+    
+    // Draw main body with gradient
+    const bodyGradient = ctx.createRadialGradient(-birdRadius * 0.3, -birdRadius * 0.3, 0, 0, 0, birdRadius * 1.5);
+    bodyGradient.addColorStop(0, bodyColor);
+    bodyGradient.addColorStop(0.7, bodyColor);
+    bodyGradient.addColorStop(1, wingColor);
+    ctx.fillStyle = bodyGradient;
+    
+    ctx.beginPath();
+    ctx.ellipse(0, 0, birdRadius * 1.2, birdRadius * 0.9, 0, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Draw head
+    const headGradient = ctx.createRadialGradient(birdRadius * 0.3, -birdRadius * 0.2, 0, birdRadius * 0.6, -birdRadius * 0.3, birdRadius * 0.8);
+    headGradient.addColorStop(0, bodyColor);
+    headGradient.addColorStop(1, wingColor);
+    ctx.fillStyle = headGradient;
+    
+    ctx.beginPath();
+    ctx.ellipse(birdRadius * 0.6, -birdRadius * 0.3, birdRadius * 0.8, birdRadius * 0.8, 0, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Draw beak with gradient
+    const beakGradient = ctx.createLinearGradient(birdRadius * 1.2, -birdRadius * 0.4, birdRadius * 1.7, -birdRadius * 0.1);
+    beakGradient.addColorStop(0, '#FF8C00');
+    beakGradient.addColorStop(1, '#FF6347');
+    ctx.fillStyle = beakGradient;
+    
+    ctx.beginPath();
+    ctx.moveTo(birdRadius * 1.2, -birdRadius * 0.4);
+    ctx.lineTo(birdRadius * 1.7, -birdRadius * 0.2);
     ctx.lineTo(birdRadius * 1.2, -birdRadius * 0.1);
     ctx.closePath();
     ctx.fill();
     
-    // Bird eye
+    // Draw eye with shine
     ctx.fillStyle = '#FFFFFF';
     ctx.beginPath();
-    ctx.ellipse(birdRadius * 0.7, -birdRadius * 0.4, birdRadius * 0.25, birdRadius * 0.25, 0, 0, Math.PI * 2);
+    ctx.ellipse(birdRadius * 0.7, -birdRadius * 0.4, birdRadius * 0.3, birdRadius * 0.3, 0, 0, Math.PI * 2);
     ctx.fill();
     
     // Eye pupil
     ctx.fillStyle = '#000000';
     ctx.beginPath();
-    ctx.ellipse(birdRadius * 0.75, -birdRadius * 0.35, birdRadius * 0.1, birdRadius * 0.1, 0, 0, Math.PI * 2);
+    ctx.ellipse(birdRadius * 0.75, -birdRadius * 0.35, birdRadius * 0.15, birdRadius * 0.15, 0, 0, Math.PI * 2);
     ctx.fill();
     
-    // Wing animation based on breathing
-    const wingFlap = gameState.breathingForceActive ? 0.3 : Math.sin(Date.now() * 0.01) * 0.1;
-    
-    // Bird wing
-    ctx.fillStyle = gameState.breathingState === 'inhale' ? '#4F46E5' : 
-                   gameState.breathingState === 'exhale' ? '#DC2626' : '#EAB308';
+    // Eye shine
+    ctx.fillStyle = '#FFFFFF';
     ctx.beginPath();
-    ctx.ellipse(-birdRadius * 0.2, birdRadius * 0.1 + wingFlap, birdRadius * 0.8, birdRadius * 0.4, -0.3, 0, Math.PI * 2);
-    ctx.fill();
-    
-    // Tail feathers
-    ctx.fillStyle = bodyColor;
-    ctx.beginPath();
-    ctx.ellipse(-birdRadius * 0.9, birdRadius * 0.2, birdRadius * 0.4, birdRadius * 0.6, 0.5, 0, Math.PI * 2);
+    ctx.ellipse(birdRadius * 0.8, -birdRadius * 0.4, birdRadius * 0.05, birdRadius * 0.05, 0, 0, Math.PI * 2);
     ctx.fill();
     
     // Breathing particles effect
@@ -628,25 +736,38 @@ export const FlappyBreath: React.FC<FlappyBreathProps> = ({ darkMode }) => {
       const particleColor = gameState.breathingState === 'inhale' ? '#60A5FA' : '#F87171';
       ctx.fillStyle = particleColor;
       
-      for (let i = 0; i < 5; i++) {
-        const angle = (i / 5) * Math.PI * 2;
-        const distance = birdRadius * 1.5;
+      for (let i = 0; i < 8; i++) {
+        const angle = (i / 8) * Math.PI * 2 + time * 3;
+        const distance = birdRadius * (1.8 + Math.sin(time * 5 + i) * 0.3);
         const particleX = Math.cos(angle) * distance;
         const particleY = Math.sin(angle) * distance;
         
+        ctx.save();
+        ctx.globalAlpha = 0.7 + Math.sin(time * 4 + i) * 0.3;
         ctx.beginPath();
-        ctx.arc(particleX, particleY, 3, 0, Math.PI * 2);
+        ctx.arc(particleX, particleY, 2 + Math.sin(time * 6 + i) * 1, 0, Math.PI * 2);
         ctx.fill();
+        ctx.restore();
       }
     }
     
-    // Reset shadow
-    ctx.shadowBlur = 0;
+    // Speed lines when moving fast
+    if (Math.abs(bird.velocityY) > 5) {
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 3; i++) {
+        ctx.beginPath();
+        ctx.moveTo(-birdRadius * 2 - i * 10, -5 + i * 5);
+        ctx.lineTo(-birdRadius * 3 - i * 15, -5 + i * 5);
+        ctx.stroke();
+      }
+    }
     
-    // Restore context
+    // Reset effects
+    ctx.shadowBlur = 0;
     ctx.restore();
+  };
 
-  }, [gameState, darkMode]);
 
   // Cleanup
   useEffect(() => {
