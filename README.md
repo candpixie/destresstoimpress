@@ -60,13 +60,10 @@ Entertainment is everywhere, but it’s not designed to connect to how we actual
 By syncing entertainment with stress signals, we make coping interactive, playful, and adaptive.
 
 👩‍💻 Team
-Candy Xie
-
-Lara De
-
-Emily New
-
-Lakshitha Vengadeswaran
+- Candy Xie
+- Lara De
+- Emily New
+- Lakshitha Vengadeswaran
 
 ⚡ Quick Start (Dev Setup)
 git clone https://github.com/candpixie/destresstoimpress
