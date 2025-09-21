@@ -78,21 +78,19 @@ export const AuthPage: React.FC<AuthPageProps> = ({ darkMode }) => {
           <motion.h2 
             className={`text-3xl font-bold mb-2 ${
             darkMode ? 'text-white' : 'text-gray-800'
-          } font-['Baloo_2']`}>
+          } font-['Baloo_2']`}
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3, duration: 0.5 }}
-          >
+            transition={{ delay: 0.3, duration: 0.5 }}>
             {isSignUp ? 'Join the Fun!' : 'Welcome Back!'}
           </motion.h2>
           <motion.p 
             className={`${
             darkMode ? 'text-gray-300' : 'text-gray-600'
-          } font-['Comic_Neue']`}>
+          } font-['Comic_Neue']`}
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.4, duration: 0.5 }}
-          >
+            transition={{ delay: 0.4, duration: 0.5 }}>
             {isSignUp ? 'Create your account to start playing' : 'Sign in to continue your journey'}
           </motion.p>
         </motion.div>
