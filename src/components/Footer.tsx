@@ -17,7 +17,7 @@ export const Footer: React.FC<FooterProps> = ({ darkMode }) => {
           </span>
           <Heart className="text-red-500 fill-red-500" size={20} />
           <span className={`text-lg ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-            at PennApps
+            at PennApps 2025
           </span>
         </div>
       </div>
